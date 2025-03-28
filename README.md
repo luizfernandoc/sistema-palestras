@@ -23,12 +23,16 @@ Certifique-se de ter instalado:
 
 3. Crie um arquivo .env na pasta backend com as seguintes variáveis:
     DB_HOST=u_host
+   
     DB_USER=seu_usuario
+
     DB_PASSWORD=sua_senha
+
     DB_NAME=nome_do_banco
+
     PORT=5000
 
-4. Inicie o servidor:
+5. Inicie o servidor:
     npm start
     O backend estará disponível em http://localhost:5000.
 
