@@ -17,34 +17,36 @@ Certifique-se de ter instalado:
    cd backend
 
 2. Instale as dependências:
+   ```bash
     npm install
     npm install express mysql2 dotenv cors
     
 
-3. Crie um arquivo .env na pasta backend com as seguintes variáveis:
+4. Crie um arquivo .env na pasta backend com as seguintes variáveis:
+   ```bash
     DB_HOST=u_host
-   
     DB_USER=seu_usuario
-
     DB_PASSWORD=sua_senha
-
     DB_NAME=nome_do_banco
-
     PORT=5000
 
 5. Inicie o servidor:
+   ```bash
     npm start
     O backend estará disponível em http://localhost:5000.
 
 ### Frontend
 1. Navegue até a pasta `frontend`:
+   ```bash
    cd frontend
 
 2. Instale as dependências:
+   ```bash
     npm install 
     npm install -D tailwindcss postcss autoprefixer
     npm install css-loader postcss-loader source-map-loader --save-dev
 
 3. Inicie o servidor de desenvolvimento:
+   ```bash
     npm start
     O frontend estará disponível em http://localhost:3000.
