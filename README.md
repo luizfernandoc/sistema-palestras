@@ -39,6 +39,7 @@ Certifique-se de ter instalado:
 2. Instale as dependências:
     npm install 
     npm install -D tailwindcss postcss autoprefixer
+    npm install css-loader postcss-loader source-map-loader --save-dev
 
 3. Inicie o servidor de desenvolvimento:
     npm start
