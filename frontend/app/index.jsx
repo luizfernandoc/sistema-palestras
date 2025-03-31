@@ -5,7 +5,7 @@ import { Link } from 'expo-router';
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text className="text-3xl">Início do PROJETO dia 30/03!</Text>
+      <Text style={styles.text}>Início do PROJETO dia 30/03!</Text>
       <StatusBar style="auto" />
       <Link href="/profile" style={{ color: 'blue' }}>Ir para os PERFIS!</Link>
     </View>
@@ -19,4 +19,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  text: {
+    fontFamily: "Poppins-Medium",
+    fontSize: 30,
+    fontWeight: 36,
+  }
 })
