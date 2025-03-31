@@ -33,7 +33,8 @@ export default function App() {
 
           <View style={styles.viewstyle2}>
             <Text style={styles.textstyle}>
-              Melhore suas Palestras com {''}
+              Crie, Melhore, Pergunte!{"\n"}
+              Tudo Isso e Mais com {''}
               <Text style={styles.textstyle2}>Inova</Text>
             </Text>
 
@@ -49,7 +50,7 @@ export default function App() {
           </Text>
 
           <CustomButton
-            title="Continue com Email"
+            title="Conheça nosso App"
             handlePress={() => router.push('/sign-in')}
             containerStyles={styles.containerstyles1}
           />
@@ -79,12 +80,12 @@ const styles = StyleSheet.create({
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
-    minHeight: '85%',
+    minHeight: '90%',
     paddingHorizontal: 16
   },
 
   imagestyle1: {
-    width: 130,
+    width: 150,
     height: 84
   },
 
@@ -115,8 +116,8 @@ const styles = StyleSheet.create({
     width: 136,
     height: 15,
     position: 'absolute',
-    bottom: -8,
-    right: -32
+    bottom: -9,
+    right: -36
   },
 
   textstyle3: {
@@ -130,6 +131,6 @@ const styles = StyleSheet.create({
 
   containerstyles1: {
     width: '100%',
-    marginTop: 28
+    marginTop: 32
   }
 })
