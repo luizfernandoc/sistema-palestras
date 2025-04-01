@@ -6,6 +6,7 @@ import { icons } from '../constants'
 const FormField = ({ title, value, placeholder, handleChangeText, otherStyles, ...props }) => {
     const [isFocused, setIsFocused] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     return (
         <View style={[styles.viewstyle1, otherStyles]}>
@@ -22,12 +23,25 @@ const FormField = ({ title, value, placeholder, handleChangeText, otherStyles, .
                     onBlur={() => setIsFocused(false)}
                     placeholderTextColor="#7B7B8B"
                     onChangeText={handleChangeText}
-                    secureTextEntry={title === 'Senha' && !showPassword}
+                    secureTextEntry={(title === 'Senha' && !showPassword) || (title === 'Confirmar Senha' && !showConfirmPassword)}
                 />
 
-                {title === 'Senha' && (
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                        <Image source={!showPassword ? icons.eye : icons.eyeHide} style={styles.iconpassword} />
+                {(title === 'Senha' || title === 'Confirmar Senha') && (
+                    <TouchableOpacity
+                        onPress={() => {
+                            if (title === 'Senha') {
+                                setShowPassword(!showPassword)
+                            } else {
+                                setShowConfirmPassword(!showConfirmPassword)
+                            }
+                        }}
+                    >
+                        <Image
+                            source={
+                                (title === 'Senha' && !showPassword) || (title === 'Confirmar Senha' && !showConfirmPassword) ? icons.eye : icons.eyeHide
+                            }
+                            style={styles.iconpassword}
+                        />
                     </TouchableOpacity>
                 )}
             </View>

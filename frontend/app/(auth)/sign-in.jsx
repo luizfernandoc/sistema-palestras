@@ -25,8 +25,8 @@ const SignIn = () => {
         <View style={styles.viewstyle1}>
           <Image
             source={images.inova}
-            resizeMode='contain'
             style={styles.inova}
+            resizeMode='contain'
           />
 
           <Text style={styles.textstyle1}>
@@ -93,8 +93,8 @@ const styles = StyleSheet.create({
   },
 
   inova: {
-    width: 115,
-    height: 35
+    width: 145,
+    height: 44
   },
 
   textstyle1: {
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   },
 
   buttonstyle: {
-    marginTop: 28
+    marginTop: 40
   },
 
   viewstyle2: {

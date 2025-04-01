@@ -51,7 +51,7 @@ export default function App() {
 
           <CustomButton
             title="Conheça nosso App"
-            handlePress={() => router.push('/sign-in')}
+            handlePress={() => router.push('/main')}
             containerStyles={styles.containerstyles1}
           />
         </View>
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   },
 
   imagestyle1: {
-    width: 150,
+    width: 180, // Tamanho da logo
     height: 84
   },
 
