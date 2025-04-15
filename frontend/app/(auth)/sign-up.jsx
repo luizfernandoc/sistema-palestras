@@ -2,11 +2,13 @@ import { View, Text, StyleSheet, ScrollView, Image, Alert } from 'react-native'
 import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
-
 import { images } from '../../constants'
+
+
 import FormField from '../../components/FormField'
 import CustomButton from '../../components/CustomButton'
 import { Link } from 'expo-router'
+import authService from '../services/authService'  // Caminho corrigido
 
 const SignUp = () => {
   const router = useRouter()
@@ -18,48 +20,79 @@ const SignUp = () => {
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errors, setErrors] = useState({})
 
-  const submit = async () => {
-    // Validação básica
-    if (!form.username || !form.email || !form.password || !form.confirmPassword) {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos');
-      return;
+  const validateForm = () => {
+    const newErrors = {}
+
+    if (!form.username.trim()) {
+      newErrors.username = 'Nome é obrigatório'
+    }
+
+    if (!form.email.trim()) {
+      newErrors.email = 'Email é obrigatório'
+    } else if (!/\S+@\S+\.\S+/.test(form.email)) {
+      newErrors.email = 'Email inválido'
+    }
+
+    if (!form.password) {
+      newErrors.password = 'Senha é obrigatória'
+    } else if (form.password.length < 6) {
+      newErrors.password = 'A senha deve ter pelo menos 6 caracteres'
     }
 
     if (form.password !== form.confirmPassword) {
-      Alert.alert('Erro', 'As senhas não coincidem');
-      return;
+      newErrors.confirmPassword = 'As senhas não coincidem'
     }
 
-    setIsSubmitting(true);
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const submit = async () => {
+    if (!validateForm()) {
+      return
+    }
+
+    setIsSubmitting(true)
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: form.username,
-          email: form.email,
-          password: form.password
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        Alert.alert('Sucesso', 'Usuário cadastrado com sucesso!', [
-          { text: 'OK', onPress: () => router.push('/sign-in') }
-        ]);
-      } else {
-        Alert.alert('Erro', data.message || 'Falha ao cadastrar usuário');
+      // Usando o authService em vez de fetch diretamente
+      const userData = {
+        name: form.username,
+        email: form.email,
+        password: form.password
       }
+
+      const result = await authService.register(userData)
+
+      console.log('Cadastro realizado com sucesso:', result)
+
+      // Garantir que o Alert seja exibido
+      Alert.alert(
+        'Sucesso',
+        'Usuário cadastrado com sucesso!',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              console.log('Redirecionando para login...')
+              router.push('/sign-in')
+            }
+          }
+        ],
+        { cancelable: false }
+      )
     } catch (error) {
-      console.error('Erro ao cadastrar usuário:', error);
-      Alert.alert('Erro', 'Não foi possível conectar ao servidor. Verifique se o backend está rodando.');
+      console.error('Erro ao cadastrar usuário:', error)
+      Alert.alert(
+        'Erro',
+        error.message || 'Falha ao cadastrar usuário',
+        [{ text: 'OK' }],
+        { cancelable: false }
+      )
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
   }
 
@@ -83,6 +116,7 @@ const SignUp = () => {
             value={form.username}
             handleChangeText={(e) => setForm({ ...form, username: e })}
             otherStyles={styles.formfield}
+            error={errors.username}
           />
 
           <FormField
@@ -92,6 +126,7 @@ const SignUp = () => {
             handleChangeText={(e) => setForm({ ...form, email: e })}
             otherStyles={styles.formfield}
             keyboardType="email-address"
+            error={errors.email}
           />
 
           <FormField
@@ -101,6 +136,7 @@ const SignUp = () => {
             handleChangeText={(e) => setForm({ ...form, password: e })}
             otherStyles={styles.formfield}
             secureTextEntry={true}
+            error={errors.password}
           />
 
           <FormField
@@ -110,6 +146,7 @@ const SignUp = () => {
             handleChangeText={(e) => setForm({ ...form, confirmPassword: e })}
             otherStyles={styles.formfield}
             secureTextEntry={true}
+            error={errors.confirmPassword}
           />
 
           <CustomButton
@@ -134,6 +171,7 @@ const SignUp = () => {
 export default SignUp
 
 const styles = StyleSheet.create({
+  // Estilos existentes mantidos
   container: {
     backgroundColor: "#161622",
     height: "100%"

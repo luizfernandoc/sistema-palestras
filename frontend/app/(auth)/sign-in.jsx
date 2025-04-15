@@ -1,22 +1,81 @@
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native'
+// c:\Users\luiz.moura\Desktop\Nova_pasta\Nova_pasta\sistema-palestras\frontend\app\(auth)\sign-in.jsx
+import { View, Text, StyleSheet, ScrollView, Image, Alert } from 'react-native'
 import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useRouter } from 'expo-router'
 
 import { images } from '../../constants'
 import FormField from '../../components/FormField'
 import CustomButton from '../../components/CustomButton'
 import { Link } from 'expo-router'
+import authService from '../services/authService'  // Adicione esta importação
 
 const SignIn = () => {
+  const router = useRouter()
   const [form, setForm] = useState({
     email: '',
     password: ''
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errors, setErrors] = useState({})
 
-  const submit = () => {
+  const validateForm = () => {
+    const newErrors = {}
 
+    if (!form.email.trim()) {
+      newErrors.email = 'Email é obrigatório'
+    }
+
+    if (!form.password) {
+      newErrors.password = 'Senha é obrigatória'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const submit = async () => {
+    if (!validateForm()) {
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      // Usando authService em vez de fetch diretamente
+      const result = await authService.login({
+        email: form.email,
+        password: form.password
+      })
+
+      console.log('Login realizado com sucesso:', result)
+
+      Alert.alert(
+        'Sucesso',
+        'Login realizado com sucesso!',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              console.log('Redirecionando para home...')
+              router.replace('/home')
+            }
+          }
+        ],
+        { cancelable: false }
+      )
+    } catch (error) {
+      console.error('Erro ao fazer login:', error)
+      Alert.alert(
+        'Erro',
+        error.message || 'Credenciais inválidas',
+        [{ text: 'OK' }],
+        { cancelable: false }
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -25,12 +84,12 @@ const SignIn = () => {
         <View style={styles.viewstyle1}>
           <Image
             source={images.inova}
-            style={styles.inova}
             resizeMode='contain'
+            style={styles.inova}
           />
 
           <Text style={styles.textstyle1}>
-            Faça o Login Agora!
+            Bem-vindo de volta!
           </Text>
 
           <FormField
@@ -38,8 +97,9 @@ const SignIn = () => {
             placeholder="fulano12@gmail.com"
             value={form.email}
             handleChangeText={(e) => setForm({ ...form, email: e })}
-            otherStyles={styles.emailfield}
+            otherStyles={styles.formfield}
             keyboardType="email-address"
+            error={errors.email}
           />
 
           <FormField
@@ -47,18 +107,17 @@ const SignIn = () => {
             placeholder="Fulano12*"
             value={form.password}
             handleChangeText={(e) => setForm({ ...form, password: e })}
-            otherStyles={styles.emailfield}
+            otherStyles={styles.formfield}
+            secureTextEntry={true}
+            error={errors.password}
           />
 
           <View style={styles.viewstyle3}>
-            <Text style={styles.textstyle3}>
-              Esqueceu a senha?
-            </Text>
-            <Link href="/sign-up" style={styles.forgotpass}>Recupere!</Link>
+            <Link href="/forgot-password" style={styles.forgotpass}>Esqueceu a senha?</Link>
           </View>
 
           <CustomButton
-            title="Login"
+            title="Entrar"
             handlePress={submit}
             containerStyles={styles.buttonstyle}
             isLoading={isSubmitting}
@@ -66,7 +125,7 @@ const SignIn = () => {
 
           <View style={styles.viewstyle2}>
             <Text style={styles.textstyle2}>
-              Não possui uma conta?
+              Não tem uma conta?
             </Text>
             <Link href="/sign-up" style={styles.signupstyle}>Cadastre-se!</Link>
           </View>
@@ -106,7 +165,7 @@ const styles = StyleSheet.create({
     fontWeight: 600
   },
 
-  emailfield: {
+  formfield: {
     marginTop: 28
   },
 
@@ -136,21 +195,12 @@ const styles = StyleSheet.create({
   },
 
   viewstyle3: {
-    justifyContent: "start",
-    flexDirection: "row",
+    alignItems: "flex-end",
     paddingTop: 10,
-    gap: 4
-  },
-
-  textstyle3: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: "#CDCDE0",
-    fontFamily: "Poppins-Regular"
   },
 
   forgotpass: {
-    fontSize: 12,
+    fontSize: 14,
     lineHeight: 18,
     fontFamily: "Poppins-SemiBold",
     color: "#FF9C01"
