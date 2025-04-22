@@ -6,5 +6,6 @@ import logoSmall from "../assets/images/logo-small.png";
 import empty from "../assets/images/empty.png";
 import inova from "../assets/images/inova.png";
 import logouvv from "../assets/images/logouvv.png";
+import forgotpassword from "../assets/images/forgotpassword.png";
 
-export default { profile, thumbnail, cards, path, logouvv, logoSmall, empty, inova };
+export default { profile, thumbnail, cards, path, logouvv, logoSmall, empty, inova, forgotpassword };
