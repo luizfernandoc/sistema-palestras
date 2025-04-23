@@ -80,7 +80,7 @@ const SignIn = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
+      <ScrollView contentContainerStyle={{ height: '100%' }}>
         <View style={styles.viewstyle1}>
           <Image
             source={images.inova}
@@ -94,7 +94,7 @@ const SignIn = () => {
 
           <FormField
             title="Email"
-            placeholder="fulano12@gmail.com"
+            placeholder="Seu email aqui"
             value={form.email}
             handleChangeText={(e) => setForm({ ...form, email: e })}
             otherStyles={styles.formfield}
@@ -104,7 +104,7 @@ const SignIn = () => {
 
           <FormField
             title="Senha"
-            placeholder="Fulano12*"
+            placeholder="Sua senha aqui"
             value={form.password}
             handleChangeText={(e) => setForm({ ...form, password: e })}
             otherStyles={styles.formfield}

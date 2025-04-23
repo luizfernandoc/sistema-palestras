@@ -17,15 +17,6 @@ const Main = () => {
             style={styles.inova}
           />
 
-          {/*
-          Podemos adicionar mais uma imagem aqui, como na página inicial talvez
-          <Image
-            source={images.cards}
-            style={styles.cardstyle}
-            resizeMode='contain'
-          />
-          */}
-
           <View style={styles.viewstyle2}>
             <Text style={styles.textstyle}>
               Seja Muito {'\n'} Bem Vindo(a) ao {''}
@@ -34,7 +25,7 @@ const Main = () => {
           </View>
 
           <Text style={styles.textstyle3}>
-            Para começar, selecione entre ALUNO ou PALESTRANTE. Vale ressaltar que somos o número 1 na UVV e estamos a incríveis 4 dias no ar!
+            Para começar, selecione entre ALUNO ou PALESTRANTE. Vale ressaltar que somos o número 1 na UVV e estamos a incríveis 21 dias no ar!
           </Text>
 
           <CustomButton
@@ -42,10 +33,17 @@ const Main = () => {
             handlePress={() => router.push('/student')}
             containerStyles={styles.containerstyles1}
           />
+
           <CustomButton
             title="Sou Palestrante"
             handlePress={() => router.push('/sign-in')}
             containerStyles={styles.containerstyles2}
+          />
+
+          <Image
+            source={images.choice}
+            style={styles.choice}
+            resizeMode='contain'
           />
 
         </View>
@@ -80,8 +78,15 @@ const styles = StyleSheet.create({
   },
 
   inova: {
+    marginTop: 28,
     width: 180,
     height: 84
+  },
+
+  choice: {
+    marginTop: 28,
+    width: 350,
+    height: 330
   },
 
   viewstyle2: {

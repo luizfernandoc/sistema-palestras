@@ -98,7 +98,7 @@ const SignUp = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
+      <ScrollView contentContainerStyle={{ height: '100%' }}>
         <View style={styles.viewstyle1}>
           <Image
             source={images.inova}
@@ -112,7 +112,7 @@ const SignUp = () => {
 
           <FormField
             title="Nome"
-            placeholder="Fulano da Silva"
+            placeholder="Seu nome aqui"
             value={form.username}
             handleChangeText={(e) => setForm({ ...form, username: e })}
             otherStyles={styles.formfield}
@@ -121,7 +121,7 @@ const SignUp = () => {
 
           <FormField
             title="Email"
-            placeholder="fulano12@gmail.com"
+            placeholder="Seu email aqui"
             value={form.email}
             handleChangeText={(e) => setForm({ ...form, email: e })}
             otherStyles={styles.formfield}
@@ -131,7 +131,7 @@ const SignUp = () => {
 
           <FormField
             title="Senha"
-            placeholder="Fulano12*"
+            placeholder="Sua senha aqui"
             value={form.password}
             handleChangeText={(e) => setForm({ ...form, password: e })}
             otherStyles={styles.formfield}
@@ -141,7 +141,7 @@ const SignUp = () => {
 
           <FormField
             title="Confirmar Senha"
-            placeholder="Fulano12*"
+            placeholder="Confirme sua senha"
             value={form.confirmPassword}
             handleChangeText={(e) => setForm({ ...form, confirmPassword: e })}
             otherStyles={styles.formfield}
@@ -186,6 +186,7 @@ const styles = StyleSheet.create({
   },
 
   inova: {
+    marginTop: 28,
     width: 145,
     height: 44
   },

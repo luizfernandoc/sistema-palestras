@@ -101,12 +101,13 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     inova: {
+        marginTop: 28,
         width: 145,
         height: 44
     },
     forgotpassword: {
         width: 350,
-        height: 280,
+        height: 330,
         marginTop: 28
     },
     buttonstyle: {

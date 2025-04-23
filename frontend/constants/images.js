@@ -7,5 +7,6 @@ import empty from "../assets/images/empty.png";
 import inova from "../assets/images/inova.png";
 import logouvv from "../assets/images/logouvv.png";
 import forgotpassword from "../assets/images/forgotpassword.png";
+import choice from "../assets/images/choice.png";
 
-export default { profile, thumbnail, cards, path, logouvv, logoSmall, empty, inova, forgotpassword };
+export default { profile, thumbnail, cards, path, logouvv, logoSmall, empty, inova, forgotpassword, choice };

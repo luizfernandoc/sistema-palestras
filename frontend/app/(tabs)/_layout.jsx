@@ -11,7 +11,6 @@ const TabIcon = ({ icon, color, name, focused }) => {
         source={icon}
         resizeMode='contain'
         tintColor={color}
-        className="w-6 h-6"
         style={styles.tabicon}
       />
       <Text style={[styles.tabtext, focused ? styles.semibold : styles.regular, { color }]}>
@@ -53,15 +52,15 @@ const TabsLayout = () => {
           }}
         />
         <Tabs.Screen
-          name="bookmark"
+          name="questions"
           options={{
-            title: 'Bookmark',
+            title: 'Questions',
             headerShown: false,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
                 icon={icons.bookmark}
                 color={color}
-                name="Bookmark"
+                name="Perguntas"
                 focused={focused}
               />
             )
@@ -76,7 +75,7 @@ const TabsLayout = () => {
               <TabIcon
                 icon={icons.plus}
                 color={color}
-                name="Create"
+                name="Criar"
                 focused={focused}
               />
             )
@@ -91,7 +90,7 @@ const TabsLayout = () => {
               <TabIcon
                 icon={icons.profile}
                 color={color}
-                name="Profile"
+                name="Perfil"
                 focused={focused}
               />
             )
@@ -110,6 +109,7 @@ const styles = StyleSheet.create({
     height: 24
   },
   tabview: {
+    marginTop: 40,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8
