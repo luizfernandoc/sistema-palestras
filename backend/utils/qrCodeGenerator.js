@@ -1,4 +1,3 @@
-// utils/qrCodeGenerator.js
 const QRCode = require('qrcode');
 
 exports.generateQRCodeForPresentation = async (accessCode, frontendUrl) => {

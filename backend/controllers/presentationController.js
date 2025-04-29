@@ -1,28 +1,38 @@
 // controllers/presentationController.js
-const db = require('../config/database');
-const crypto = require('crypto');
-const QRCode = require('qrcode');
+const Presentation = require('../models/Presentation');
 
+// controllers/presentationController.js
 exports.createPresentation = async (req, res) => {
   try {
-    const { title, description, date, time, location, theme } = req.body;
+    const { title, location, date, moreinfo } = req.body;
+    
+    // Verificar se req.userData existe e contém userId
+    if (!req.userData || !req.userData.userId) {
+      console.error('Dados do usuário não encontrados no token');
+      return res.status(401).json({
+        message: 'Autenticação falhou: dados do usuário não encontrados'
+      });
+    }
+    
     const userId = req.userData.userId;
+    console.log('Criando apresentação para o usuário:', userId);
+    console.log('Dados recebidos:', { title, location, date, moreinfo });
     
-    // Gerar código único para a apresentação
-    const uniqueCode = crypto.randomBytes(3).toString('hex').toUpperCase();
-    
-    const [result] = await db.execute(
-      'INSERT INTO presentations (title, description, date, time, location, theme, user_id, access_code, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [title, description, date, time, location, theme, userId, uniqueCode, 'scheduled']
-    );
+    const presentation = await Presentation.create({
+      title,
+      location,
+      date,
+      moreinfo,
+      userId
+    });
     
     res.status(201).json({
       message: 'Apresentação criada com sucesso',
-      presentationId: result.insertId,
-      accessCode: uniqueCode
+      presentationId: presentation.id,
+      accessCode: presentation.access_code
     });
   } catch (error) {
-    console.error(error);
+    console.error('Erro ao criar apresentação:', error);
     res.status(500).json({
       error: error.message
     });
@@ -33,10 +43,7 @@ exports.getPresentations = async (req, res) => {
   try {
     const userId = req.userData.userId;
     
-    const [presentations] = await db.execute(
-      'SELECT * FROM presentations WHERE user_id = ? ORDER BY date DESC, time DESC',
-      [userId]
-    );
+    const presentations = await Presentation.findByUser(userId);
     
     res.status(200).json({
       presentations
@@ -53,19 +60,16 @@ exports.getPresentationById = async (req, res) => {
   try {
     const presentationId = req.params.id;
     
-    const [presentations] = await db.execute(
-      'SELECT * FROM presentations WHERE id = ?',
-      [presentationId]
-    );
+    const presentation = await Presentation.findById(presentationId);
     
-    if (presentations.length === 0) {
+    if (!presentation) {
       return res.status(404).json({
         message: 'Apresentação não encontrada'
       });
     }
     
     res.status(200).json({
-      presentation: presentations[0]
+      presentation
     });
   } catch (error) {
     console.error(error);
@@ -79,26 +83,23 @@ exports.getPresentationByCode = async (req, res) => {
   try {
     const accessCode = req.params.code;
     
-    const [presentations] = await db.execute(
-      'SELECT * FROM presentations WHERE access_code = ?',
-      [accessCode]
-    );
+    const presentation = await Presentation.findByCode(accessCode);
     
-    if (presentations.length === 0) {
+    if (!presentation) {
       return res.status(404).json({
         message: 'Apresentação não encontrada'
       });
     }
     
     // Verificar se a apresentação está ativa
-    if (presentations[0].status !== 'active') {
+    if (presentation.status !== 'active') {
       return res.status(403).json({
         message: 'Esta apresentação não está ativa no momento'
       });
     }
     
     res.status(200).json({
-      presentation: presentations[0]
+      presentation
     });
   } catch (error) {
     console.error(error);
@@ -111,28 +112,28 @@ exports.getPresentationByCode = async (req, res) => {
 exports.updatePresentation = async (req, res) => {
   try {
     const presentationId = req.params.id;
-    const { title, description, date, time, location, theme } = req.body;
+    const { title, location, date, moreinfo } = req.body;
     const userId = req.userData.userId;
     
     // Verificar se a apresentação pertence ao usuário
-    const [presentations] = await db.execute(
-      'SELECT * FROM presentations WHERE id = ? AND user_id = ?',
-      [presentationId, userId]
-    );
+    const presentation = await Presentation.findById(presentationId);
     
-    if (presentations.length === 0) {
+    if (!presentation || presentation.user_id !== userId) {
       return res.status(404).json({
         message: 'Apresentação não encontrada ou não autorizada'
       });
     }
     
-    await db.execute(
-      'UPDATE presentations SET title = ?, description = ?, date = ?, time = ?, location = ?, theme = ? WHERE id = ?',
-      [title, description, date, time, location, theme, presentationId]
-    );
+    const updatedPresentation = await Presentation.update(presentationId, {
+      title,
+      location,
+      date,
+      moreinfo
+    });
     
     res.status(200).json({
-      message: 'Apresentação atualizada com sucesso'
+      message: 'Apresentação atualizada com sucesso',
+      presentation: updatedPresentation
     });
   } catch (error) {
     console.error(error);
@@ -148,21 +149,15 @@ exports.deletePresentation = async (req, res) => {
     const userId = req.userData.userId;
     
     // Verificar se a apresentação pertence ao usuário
-    const [presentations] = await db.execute(
-      'SELECT * FROM presentations WHERE id = ? AND user_id = ?',
-      [presentationId, userId]
-    );
+    const presentation = await Presentation.findById(presentationId);
     
-    if (presentations.length === 0) {
+    if (!presentation || presentation.user_id !== userId) {
       return res.status(404).json({
         message: 'Apresentação não encontrada ou não autorizada'
       });
     }
     
-    await db.execute(
-      'DELETE FROM presentations WHERE id = ?',
-      [presentationId]
-    );
+    await Presentation.delete(presentationId);
     
     res.status(200).json({
       message: 'Apresentação excluída com sucesso'
@@ -181,24 +176,19 @@ exports.startPresentation = async (req, res) => {
     const userId = req.userData.userId;
     
     // Verificar se a apresentação pertence ao usuário
-    const [presentations] = await db.execute(
-      'SELECT * FROM presentations WHERE id = ? AND user_id = ?',
-      [presentationId, userId]
-    );
+    const presentation = await Presentation.findById(presentationId);
     
-    if (presentations.length === 0) {
+    if (!presentation || presentation.user_id !== userId) {
       return res.status(404).json({
         message: 'Apresentação não encontrada ou não autorizada'
       });
     }
     
-    await db.execute(
-      'UPDATE presentations SET status = ?, start_time = NOW() WHERE id = ?',
-      ['active', presentationId]
-    );
+    const updatedPresentation = await Presentation.start(presentationId);
     
     res.status(200).json({
-      message: 'Apresentação iniciada com sucesso'
+      message: 'Apresentação iniciada com sucesso',
+      presentation: updatedPresentation
     });
   } catch (error) {
     console.error(error);
@@ -214,24 +204,19 @@ exports.endPresentation = async (req, res) => {
     const userId = req.userData.userId;
     
     // Verificar se a apresentação pertence ao usuário
-    const [presentations] = await db.execute(
-      'SELECT * FROM presentations WHERE id = ? AND user_id = ?',
-      [presentationId, userId]
-    );
+    const presentation = await Presentation.findById(presentationId);
     
-    if (presentations.length === 0) {
+    if (!presentation || presentation.user_id !== userId) {
       return res.status(404).json({
         message: 'Apresentação não encontrada ou não autorizada'
       });
     }
     
-    await db.execute(
-      'UPDATE presentations SET status = ?, end_time = NOW() WHERE id = ?',
-      ['completed', presentationId]
-    );
+    const updatedPresentation = await Presentation.end(presentationId);
     
     res.status(200).json({
-      message: 'Apresentação encerrada com sucesso'
+      message: 'Apresentação encerrada com sucesso',
+      presentation: updatedPresentation
     });
   } catch (error) {
     console.error(error);
@@ -244,20 +229,18 @@ exports.endPresentation = async (req, res) => {
 exports.generateQRCode = async (req, res) => {
   try {
     const presentationId = req.params.id;
+    const QRCode = require('qrcode');
     
     // Buscar o código de acesso da apresentação
-    const [presentations] = await db.execute(
-      'SELECT access_code FROM presentations WHERE id = ?',
-      [presentationId]
-    );
+    const presentation = await Presentation.findById(presentationId);
     
-    if (presentations.length === 0) {
+    if (!presentation) {
       return res.status(404).json({
         message: 'Apresentação não encontrada'
       });
     }
     
-    const accessCode = presentations[0].access_code;
+    const accessCode = presentation.access_code;
     
     // URL para acesso à apresentação
     const accessUrl = `${process.env.FRONTEND_URL}/audience/join/${accessCode}`;

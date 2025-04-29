@@ -1,17 +1,18 @@
-// c:\Users\luiz.moura\Desktop\Nova_pasta\Nova_pasta\sistema-palestras\frontend\app\services\authService.js
+// c:\Users\luizf\Desktop\Nova_pasta_(2)\sistema-palestras\frontend\app\services\authService.js
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native'; // Adicionar esta importação
 
-// Remova temporariamente esta importação
-// import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://localhost:5000/api';
-
-// Armazenamento temporário em memória
-let tokenStorage = null;
-let userStorage = null;
+const API_URL = Platform.OS === 'web' 
+  ? 'http://localhost:5000/api'  // Para desenvolvimento web
+  : 'http://192.168.0.2:5000/api'; // Substitua pelo IP do seu computador
 
 const authService = {
   async register(userData) {
     try {
+      console.log('Enviando dados de registro:', userData);
+      console.log('URL completa:', `${API_URL}/auth/register`);
+      
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
@@ -20,7 +21,9 @@ const authService = {
         body: JSON.stringify(userData)
       });
       
+      console.log('Status da resposta:', response.status);
       const data = await response.json();
+      console.log('Dados da resposta:', data);
       
       if (!response.ok) {
         throw new Error(data.message || 'Erro ao registrar usuário');
@@ -28,6 +31,7 @@ const authService = {
       
       return data;
     } catch (error) {
+      console.error('Erro detalhado no registro:', error);
       throw error;
     }
   },
@@ -48,9 +52,9 @@ const authService = {
         throw new Error(data.message || 'Credenciais inválidas');
       }
       
-      // Armazenar token e dados do usuário em memória
-      tokenStorage = data.token;
-      userStorage = data.user;
+      // Armazenar token e dados do usuário no AsyncStorage
+      await AsyncStorage.setItem('token', data.token);
+      await AsyncStorage.setItem('user', JSON.stringify(data.user));
       
       return data;
     } catch (error) {
@@ -59,20 +63,22 @@ const authService = {
   },
   
   async logout() {
-    tokenStorage = null;
-    userStorage = null;
+    await AsyncStorage.removeItem('token');
+    await AsyncStorage.removeItem('user');
   },
   
   async isAuthenticated() {
-    return !!tokenStorage;
+    const token = await AsyncStorage.getItem('token');
+    return !!token;
   },
   
   async getUser() {
-    return userStorage;
+    const userJson = await AsyncStorage.getItem('user');
+    return userJson ? JSON.parse(userJson) : null;
   },
   
   async getToken() {
-    return tokenStorage;
+    return await AsyncStorage.getItem('token');
   }
 };
 

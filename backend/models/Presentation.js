@@ -21,43 +21,53 @@ class Presentation {
 
   static async findByUser(userId) {
     const [presentations] = await db.execute(
-      'SELECT * FROM presentations WHERE user_id = ? ORDER BY date DESC, time DESC',
+      'SELECT * FROM presentations WHERE user_id = ? ORDER BY date DESC',
       [userId]
     );
     return presentations;
   }
 
+  // models/Presentation.js
   static async create(presentationData) {
-    const { title, description, date, time, location, theme, userId } = presentationData;
+    const { title, location, date, moreinfo, userId } = presentationData;
     
     // Gerar código único para a apresentação
     const uniqueCode = crypto.randomBytes(3).toString('hex').toUpperCase();
     
-    const [result] = await db.execute(
-      'INSERT INTO presentations (title, description, date, time, location, theme, user_id, access_code, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [title, description, date, time, location, theme, userId, uniqueCode, 'scheduled']
-    );
+    // Garantir que nenhum valor seja undefined
+    const sanitizedTitle = title || '';
+    const sanitizedLocation = location || '';
+    const sanitizedDate = date || '';
+    const sanitizedMoreinfo = moreinfo === undefined ? null : moreinfo;
     
-    return {
-      id: result.insertId,
-      title,
-      description,
-      date,
-      time,
-      location,
-      theme,
-      user_id: userId,
-      access_code: uniqueCode,
-      status: 'scheduled'
-    };
+    try {
+      const [result] = await db.execute(
+        'INSERT INTO presentations (title, location, date, moreinfo, user_id, access_code, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [sanitizedTitle, sanitizedLocation, sanitizedDate, sanitizedMoreinfo, userId, uniqueCode, 'scheduled']
+      );
+      
+      return {
+        id: result.insertId,
+        title: sanitizedTitle,
+        location: sanitizedLocation,
+        date: sanitizedDate,
+        moreinfo: sanitizedMoreinfo,
+        user_id: userId,
+        access_code: uniqueCode,
+        status: 'scheduled'
+      };
+    } catch (dbError) {
+      console.error('Erro no banco de dados:', dbError);
+      throw new Error('Erro ao criar apresentação no banco de dados');
+    }
   }
-
+  
   static async update(id, presentationData) {
-    const { title, description, date, time, location, theme } = presentationData;
+    const { title, location, date, moreinfo } = presentationData;
     
     await db.execute(
-      'UPDATE presentations SET title = ?, description = ?, date = ?, time = ?, location = ?, theme = ? WHERE id = ?',
-      [title, description, date, time, location, theme, id]
+      'UPDATE presentations SET title = ?, location = ?, date = ?, moreinfo = ? WHERE id = ?',
+      [title, location, date, moreinfo, id]
     );
     
     return this.findById(id);

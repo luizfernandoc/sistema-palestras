@@ -1,9 +1,11 @@
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native'
+// frontend/app/(tabs)/create.jsx
+import { View, Text, StyleSheet, ScrollView, Image, Alert } from 'react-native'
 import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import FormField from '../../components/FormField'
 import CustomButton from '../../components/CustomButton'
 import { Redirect, router } from 'expo-router';
+import PresentationService from '../services/PresentationService'; // Caminho corrigido
 
 import { images } from '../../constants'
 
@@ -17,8 +19,56 @@ const Create = () => {
     moreinfo: ''
   })
 
-  const submit = () => {
+  const validateForm = () => {
+    if (!form.title.trim()) {
+      Alert.alert('Erro', 'O título da palestra é obrigatório');
+      return false;
+    }
+    if (!form.location.trim()) {
+      Alert.alert('Erro', 'O local da palestra é obrigatório');
+      return false;
+    }
+    if (!form.date.trim()) {
+      Alert.alert('Erro', 'A data e hora da palestra são obrigatórias');
+      return false;
+    }
+    return true;
+  }
 
+  const submit = async () => {
+    if (!validateForm()) return;
+    
+    try {
+      setUploading(true);
+      
+      // Garantir que os dados estejam no formato esperado pelo backend
+      const presentationData = {
+        title: form.title.trim(),
+        location: form.location.trim(),
+        date: form.date.trim(),
+        moreinfo: form.moreinfo.trim()
+      };
+      
+      console.log('Enviando dados formatados:', presentationData);
+      
+      const response = await PresentationService.createPresentation(presentationData);
+      
+      Alert.alert(
+        'Sucesso', 
+        `Palestra criada com sucesso!\nCódigo de acesso: ${response.accessCode}`,
+        [
+          { 
+            text: 'OK', 
+            onPress: () => router.push('/presentations')
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('Erro ao criar palestra:', error);
+      Alert.alert('Erro', error.message || 'Não foi possível criar a palestra. Tente novamente.');
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (

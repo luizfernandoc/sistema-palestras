@@ -51,23 +51,30 @@ const SignUp = () => {
 
   const submit = async () => {
     if (!validateForm()) {
-      return
+      return;
     }
-
-    setIsSubmitting(true)
-
+  
+    setIsSubmitting(true);
+  
     try {
+      console.log('Iniciando registro com dados:', {
+        name: form.username,
+        email: form.email,
+        password: form.password
+      });
+      
       // Usando o authService em vez de fetch diretamente
       const userData = {
         name: form.username,
         email: form.email,
         password: form.password
-      }
-
-      const result = await authService.register(userData)
-
-      console.log('Cadastro realizado com sucesso:', result)
-
+      };
+  
+      console.log('Chamando authService.register com:', userData);
+      const result = await authService.register(userData);
+  
+      console.log('Cadastro realizado com sucesso:', result);
+  
       // Garantir que o Alert seja exibido
       Alert.alert(
         'Sucesso',
@@ -76,25 +83,25 @@ const SignUp = () => {
           {
             text: 'OK',
             onPress: () => {
-              console.log('Redirecionando para login...')
-              router.push('/sign-in')
+              console.log('Redirecionando para login...');
+              router.push('/sign-in');
             }
           }
         ],
         { cancelable: false }
-      )
+      );
     } catch (error) {
-      console.error('Erro ao cadastrar usuário:', error)
+      console.error('Erro ao cadastrar usuário:', error);
       Alert.alert(
         'Erro',
         error.message || 'Falha ao cadastrar usuário',
         [{ text: 'OK' }],
         { cancelable: false }
-      )
+      );
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
