@@ -33,5 +33,5 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     color: 'white',
     fontFamily: 'Poppins-SemiBold'
-  }
+  },
 })

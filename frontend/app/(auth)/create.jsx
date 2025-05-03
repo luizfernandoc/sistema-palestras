@@ -74,16 +74,12 @@ const Create = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollview}>
-
-        {/*}
-        Caso queira adicionar logo do APP
         <Image
           source={images.inova}
           resizeMode='contain'
           style={styles.inova}
         />
-        {*/}
-
+  
         <Text style={styles.textstyle1}>
           Criar Palestra
         </Text>
@@ -151,7 +147,7 @@ const styles = StyleSheet.create({
   },
 
   textstyle1: {
-    marginTop: 20,
+    marginTop: 25,
     fontSize: 24,
     lineHeight: 32,
     color: 'white',
@@ -167,6 +163,7 @@ const styles = StyleSheet.create({
   },
 
   formfield3: {
+
     marginTop: 32
   },
 

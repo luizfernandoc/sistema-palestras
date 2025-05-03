@@ -21,9 +21,10 @@ const Home = () => {
         />
 
         <Text style={styles.textstyle1}>
-          Bem Vindo!
+          Home
         </Text>
 
+        {/*
         <CustomButton
           title="Criar Palestra"
           handlePress={() => router.push('/create')}
@@ -35,6 +36,7 @@ const Home = () => {
           handlePress={() => {}}
           containerStyles={styles.button}
         />
+        */}
 
       </ScrollView>
     </SafeAreaView>

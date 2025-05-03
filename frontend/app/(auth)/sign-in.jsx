@@ -59,7 +59,7 @@ const SignIn = () => {
             text: 'OK',
             onPress: () => {
               console.log('Redirecionando para home...')
-              router.replace('/home')
+              router.replace('/logged') // alteração
             }
           }
         ],

@@ -39,6 +39,18 @@ const AuthLayout = () => {
             headerShown: false
           }}
         />
+        <Stack.Screen
+          name="logged"
+          options={{
+            headerShown: false
+          }}
+        />
+        <Stack.Screen
+          name="create"
+          options={{
+            headerShown: false
+          }}
+        />
       </Stack>
 
       <StatusBar backgroundColor="#161622" style='light' />
