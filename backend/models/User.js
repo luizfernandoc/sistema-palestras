@@ -38,6 +38,21 @@ class User {
     };
   }
 
+  static async createAudience(userData) {
+    const { name, accessCode, role = 'audience' } = userData;
+    
+    const [result] = await db.execute(
+      'INSERT INTO users (name, access_code, role) VALUES (?, ?, ?)',
+      [name, accessCode, role]
+    );
+    
+    return {
+      id: result.insertId,
+      name,
+      role
+    };
+  }
+
   static async verifyPassword(user, password) {
     return bcrypt.compare(password, user.password);
   }

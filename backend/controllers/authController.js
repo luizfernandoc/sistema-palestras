@@ -31,6 +31,37 @@ exports.register = async (req, res) => {
   }
 };
 
+exports.registerAudience = async (req, res) => {
+  try {
+    const accessCode = req.params.accessCode;
+    const { name } = req.body;
+     
+    // Criar usuário
+    const user = await User.createAudience({ name, accessCode });
+
+    // Gerar token
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        role: user.role
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+    
+    res.status(201).json({
+      message: 'Usuário criado com sucesso',
+      token,
+      userId: user.id
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: error.message
+    });
+  }
+};
+
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
