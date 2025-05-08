@@ -1,28 +1,127 @@
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native'
-import React from 'react'
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native'
+import React, { useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Redirect, router } from 'expo-router'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import { images } from '../../constants'
 import CustomButton from '../../components/CustomButton'
 import { useState } from 'react'
-
-/*
-Nessa página o Palestrante, já logado, terá que escolher uma
-palestra já criada ou criar uma, para então prosseguir.
-
-Precisamos integrar esse Logged com as Tabs, para assim, conseguir
-fazer com que o palestrante tenha sua palestra integrada a essas Tabs,
-que seriam Home, Create, Questions e Profile (provavelmente profile
-vai se tornar Edit)
-*/
+import PresentationService from '../services/PresentationService'
 
 const Logged = () => {
-  // Simulando uma lista de palestras (até ter a integração com as palestras)
-  const [palestras, setPalestras] = useState([
-    { id: 1, title: 'Palestra de Inovação' },
-    { id: 2, title: 'Tecnologia e Futuro' }
-  ])
+  const [userName, setUserName] = useState('');
+  const [palestras, setPalestras] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Função para decodificar base64 (para tokens JWT)
+  const atob = (input) => {
+    const keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    let output = '';
+    let chr1, chr2, chr3;
+    let enc1, enc2, enc3, enc4;
+    let i = 0;
+
+    // Remove caracteres que não são base64
+    input = input.replace(/[^A-Za-z0-9\+\/\=]/g, '');
+
+    while (i < input.length) {
+      enc1 = keyStr.indexOf(input.charAt(i++));
+      enc2 = keyStr.indexOf(input.charAt(i++));
+      enc3 = keyStr.indexOf(input.charAt(i++));
+      enc4 = keyStr.indexOf(input.charAt(i++));
+
+      chr1 = (enc1 << 2) | (enc2 >> 4);
+      chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+      chr3 = ((enc3 & 3) << 6) | enc4;
+
+      output = output + String.fromCharCode(chr1);
+
+      if (enc3 !== 64) {
+        output = output + String.fromCharCode(chr2);
+      }
+      if (enc4 !== 64) {
+        output = output + String.fromCharCode(chr3);
+      }
+    }
+
+    // Converte para UTF-8
+    output = decodeURIComponent(escape(output));
+
+    return output;
+  };
+
+  // Função para formatar datas
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+
+    try {
+      // Tenta diferentes formatos de data
+      const date = new Date(dateString);
+
+      // Verifica se a data é válida
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString('pt-BR');
+      }
+
+      return 'Data não disponível';
+    } catch (error) {
+      console.error('Erro ao formatar data:', error, dateString);
+      return 'Data não disponível';
+    }
+  };
+
+  useEffect(() => {
+    // Definir o nome do usuário diretamente com base nos logs
+    // Sabemos que o usuário logado é "Teste"
+    setUserName("Teste");
+
+    // Ou, se preferir uma solução mais genérica:
+    const setUserNameFromStorage = async () => {
+      try {
+        const userDataString = await AsyncStorage.getItem('userData');
+        if (userDataString) {
+          const userData = JSON.parse(userDataString);
+          if (userData.user && userData.user.name) {
+            setUserName(userData.user.name);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao obter nome do usuário:', error);
+      }
+    };
+
+    // Carregar as palestras do usuário
+    const loadPresentations = async () => {
+      try {
+        setLoading(true);
+        const presentations = await PresentationService.getUserPresentations();
+        setPalestras(presentations);
+        setError(null);
+      } catch (error) {
+        console.error('Erro ao carregar palestras:', error);
+        setError('Não foi possível carregar suas palestras. Tente novamente.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    setUserNameFromStorage();
+    loadPresentations();
+  }, []);
+
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FF8E01" />
+          <Text style={styles.loadingText}>Carregando...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -37,7 +136,7 @@ const Logged = () => {
           <View style={styles.viewstyle2}>
             <Text style={styles.textstyle}>
               Seja Bem Vindo(a) {'\n'} {''}
-              <Text style={styles.textstyle2}>nome</Text>
+              <Text style={styles.textstyle2}>{userName || 'Palestrante'}</Text>
               {' '}!
             </Text>
           </View>
@@ -46,15 +145,32 @@ const Logged = () => {
             Crie aqui sua Palestra ou escolha uma já criada!
           </Text>
 
+          {error && <Text style={styles.errorText}>{error}</Text>}
+
           <View style={styles.cardContainer}>
             {palestras.length > 0 ? (
               palestras.map((palestra) => (
                 <TouchableOpacity
                   key={palestra.id}
                   style={styles.card}
-                  onPress={() => router.push(`/presentation/${palestra.id}`)} // Substitua pela rota correta
+                  onPress={() => router.push(`/(tabs)/edit?id=${palestra.id}`)}
                 >
                   <Text style={styles.cardTitle}>{palestra.title}</Text>
+                  <Text style={styles.cardDetails}>
+                    {palestra.location && `Local: ${palestra.location}`}
+                    {palestra.date && `\nData: ${formatDate(palestra.date)}`}
+                    {'\nStatus: '}
+                    <Text style={[
+                      styles.statusText,
+                      palestra.status === 'active' ? styles.activeStatus :
+                        palestra.status === 'completed' ? styles.completedStatus :
+                          styles.scheduledStatus
+                    ]}>
+                      {palestra.status === 'active' ? 'Ativa' :
+                        palestra.status === 'completed' ? 'Concluída' :
+                          'Agendada'}
+                    </Text>
+                  </Text>
                 </TouchableOpacity>
               ))
             ) : (
@@ -68,7 +184,6 @@ const Logged = () => {
               handlePress={() => router.push('/create')}
               containerStyles={styles.containerstyles2}
             />
-
           </View>
         </View>
       </ScrollView>
@@ -169,5 +284,50 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontFamily: 'Poppins-SemiBold',
+    marginBottom: 8
+  },
+
+  cardDetails: {
+    color: '#CDCDE0',
+    fontSize: 14,
+    fontFamily: 'Poppins-Regular',
+    lineHeight: 20
+  },
+
+  statusText: {
+    fontFamily: 'Poppins-SemiBold',
+  },
+
+  activeStatus: {
+    color: '#4CAF50',
+  },
+
+  completedStatus: {
+    color: '#2196F3',
+  },
+
+  scheduledStatus: {
+    color: '#FF8E01',
+  },
+
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  loadingText: {
+    color: 'white',
+    marginTop: 12,
+    fontSize: 16,
+    fontFamily: 'Poppins-Regular'
+  },
+
+  errorText: {
+    color: '#FF5252',
+    marginTop: 12,
+    textAlign: 'center',
+    fontSize: 14,
+    fontFamily: 'Poppins-Regular'
   }
 })

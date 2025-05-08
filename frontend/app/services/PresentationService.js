@@ -24,7 +24,22 @@ class PresentationService {
     });
   }
 
-
+  async getUserInfo() {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) throw new Error('Token não encontrado');
+      
+      const response = await this.api.get('/user/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao obter informações do usuário:', error);
+      throw this._handleError(error);
+    }
+  }
+  
   async createPresentation(presentationData) {
     try {
       // Garantir que nenhum valor seja undefined

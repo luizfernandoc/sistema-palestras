@@ -1,8 +1,9 @@
 // frontend/app/presentation/[id].jsx
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
+
 
 import PresentationService from '../services/PresentationService';
 import FormField from '../../components/FormField';
@@ -15,7 +16,10 @@ nessa página e na página Home, onde ficarão os dados da Palestra.
 */
 
 const Edit = () => {
-  const { id } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  const id = params.id;
+  console.log("ID da palestra recebido:", id);
+
   const [form, setForm] = useState({
     title: '',
     location: '',
@@ -23,24 +27,54 @@ const Edit = () => {
     moreinfo: ''
   });
   const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchPresentation = async () => {
       try {
-        const data = await PresentationService.getPresentationById(id); // Ajuste de acordo com o backend
-        setForm({
-          title: data.title,
-          location: data.location,
-          date: data.date,
-          moreinfo: data.moreinfo || ''
-        });
+        setIsLoading(true);
+        const data = await PresentationService.getPresentationById(id);
+        if (data) {
+          setForm({
+            title: data.title || '',
+            location: data.location || '',
+            date: data.date || '',
+            moreinfo: data.moreinfo || ''
+          });
+        } else {
+          Alert.alert('Erro', 'Palestra não encontrada');
+          router.back();
+        }
       } catch (error) {
+        console.error('Erro ao carregar palestra:', error);
         Alert.alert('Erro', 'Não foi possível carregar a palestra.');
+        router.back();
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchPresentation();
+    if (id) {
+      fetchPresentation();
+    } else {
+      Alert.alert('Erro', 'ID da palestra não fornecido');
+      router.back();
+    }
   }, [id]);
+
+  // Resto do código permanece o mesmo...
+  
+  // Adicionar um indicador de carregamento
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FF8E01" />
+          <Text style={styles.loadingText}>Carregando...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const validateForm = () => {
     if (!form.title.trim()) return Alert.alert('Erro', 'Título obrigatório');
@@ -68,6 +102,17 @@ const Edit = () => {
       setLoading(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FF8E01" />
+          <Text style={styles.loadingText}>Carregando...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -148,5 +193,18 @@ const styles = StyleSheet.create({
 
   button: {
     marginTop: 40
+  },
+
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
+  loadingText: {
+    color: 'white',
+    marginTop: 12,
+    fontSize: 16,
+    fontFamily: 'Poppins-Regular'
   }
 });
