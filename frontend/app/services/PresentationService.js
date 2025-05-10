@@ -6,7 +6,7 @@ import { Platform } from 'react-native'; // Adicionar esta importação
 
 const API_URL = Platform.OS === 'web' 
   ? 'http://localhost:5000/api'  // Para desenvolvimento web
-  : 'http://192.168.0.2:5000/api'; // Substitua pelo IP do seu computador
+  : 'http://192.168.136.1:5000/api'; // Substitua pelo IP do seu computador
 
 class PresentationService {
   constructor() {

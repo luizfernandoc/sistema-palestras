@@ -74,9 +74,6 @@ const Logged = () => {
 
   useEffect(() => {
     // Definir o nome do usuário diretamente com base nos logs
-    // Sabemos que o usuário logado é "Teste"
-    setUserName("Teste");
-
     // Ou, se preferir uma solução mais genérica:
     const setUserNameFromStorage = async () => {
       try {
@@ -153,7 +150,12 @@ const Logged = () => {
                 <TouchableOpacity
                   key={palestra.id}
                   style={styles.card}
-                  onPress={() => router.push(`/(tabs)/edit?id=${palestra.id}`)}
+                  onPress={async () => {
+                    // Salvar o ID da palestra no AsyncStorage
+                    await AsyncStorage.setItem('selectedPresentationId', palestra.id.toString());
+                    // Navegar para a home
+                    router.push('/(tabs)/home');
+                  }}
                 >
                   <Text style={styles.cardTitle}>{palestra.title}</Text>
                   <Text style={styles.cardDetails}>

@@ -1,15 +1,115 @@
-import { View, Text, ScrollView, StyleSheet, Image } from 'react-native'
-import React from 'react'
+import { View, Text, ScrollView, StyleSheet, Image, ActivityIndicator } from 'react-native'
+import React, { useEffect, useState, useRef } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useLocalSearchParams } from 'expo-router'
 
 import { images } from '../../constants'
-import CustomButton from '../../components/CustomButton'
 import { router } from 'expo-router'
+import PresentationService from '../services/PresentationService'
+import CustomButton from '../../components/CustomButton'
 
 const Home = () => {
-  const submit = () => {
+  const params = useLocalSearchParams();
+  const [presentationId, setPresentationId] = useState(null);
+  const [presentation, setPresentation] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Função para formatar datas
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
 
-  }
+    try {
+      // Tenta diferentes formatos de data
+      const date = new Date(dateString);
+
+      // Verifica se a data é válida
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString('pt-BR');
+      }
+
+      return 'Data não disponível';
+    } catch (error) {
+      console.error('Erro ao formatar data:', error, dateString);
+      return 'Data não disponível';
+    }
+  };
+  
+  useEffect(() => {
+    // Carregar o ID da palestra do AsyncStorage
+    const loadPresentationId = async () => {
+      try {
+        const id = await AsyncStorage.getItem('selectedPresentationId');
+        if (id) {
+          setPresentationId(id);
+          console.log('ID da palestra carregado:', id);
+          // Carregar os dados da palestra
+          fetchPresentationData(id);
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar ID da palestra:', error);
+        setError('Erro ao carregar ID da palestra');
+        setLoading(false);
+      }
+    };
+    
+    loadPresentationId();
+  }, [params.updated, params.timestamp]); // Recarregar quando os parâmetros mudarem
+
+  const fetchPresentationData = async (id) => {
+    try {
+      setLoading(true);
+      
+      // Buscar dados da palestra usando o serviço
+      const data = await PresentationService.getPresentationById(id);
+      setPresentation(data);
+      setError(null);
+    } catch (error) {
+      console.error('Erro ao carregar dados da palestra:', error);
+      setError('Não foi possível carregar os dados da palestra. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // TIMER
+  const [isRunning, setIsRunning] = useState(false);
+  const [seconds, setSeconds] = useState(0);
+  const intervalRef = useRef(null);
+
+  const startTimer = () => {
+    setIsRunning(true);
+    intervalRef.current = setInterval(() => {
+      setSeconds(prev => prev + 1);
+    }, 1000);
+  };
+
+  const stopTimer = () => {
+    setIsRunning(false);
+    clearInterval(intervalRef.current);
+    intervalRef.current = null;
+
+    // Aqui você pode salvar o tempo ou realizar outra ação
+    console.log('Palestra finalizada - tempo total:', seconds, 'segundos');
+  };
+
+  const handleTimerPress = () => {
+    if (!isRunning) {
+      startTimer();
+    } else {
+      stopTimer();
+    }
+  };
+
+  const formatTime = (totalSeconds) => {
+    const hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+    const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+    const secs = String(totalSeconds % 60).padStart(2, '0');
+    return `${hrs}:${mins}:${secs}`;
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -24,26 +124,65 @@ const Home = () => {
           Home
         </Text>
 
-        {/*
+        {loading ? (
+          <ActivityIndicator size="large" color="#FFA001" style={styles.loader} />
+        ) : error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : presentation ? (
+          <View style={styles.presentationContainer}>
+            <Text style={styles.presentationTitle}>{presentation.title}</Text>
+            <Text style={styles.presentationDetails}>Data: {formatDate(presentation.date)}</Text>
+            {presentation.time && (
+              <Text style={styles.presentationDetails}>Horário: {presentation.time}</Text>
+            )}
+            {presentation.location && (
+              <Text style={styles.presentationDetails}>Local: {presentation.location}</Text>
+            )}
+            {presentation.speaker && (
+              <Text style={styles.presentationDetails}>Palestrante: {presentation.speaker}</Text>
+            )}
+            <Text style={styles.presentationStatus}>
+              Status: <Text style={[
+                styles.statusText,
+                presentation.status === 'active' ? styles.activeStatus :
+                  presentation.status === 'completed' ? styles.completedStatus :
+                    styles.scheduledStatus
+              ]}>
+                {presentation.status === 'active' ? 'Ativa' :
+                  presentation.status === 'completed' ? 'Concluída' :
+                    'Agendada'}
+              </Text>
+            </Text>
+            {presentation.description && (
+              <Text style={styles.presentationDescription}>{presentation.description}</Text>
+            )}
+          </View>
+        ) : (
+          <View>
+            <Text style={styles.presentationText}>
+              Nenhuma palestra selecionada
+            </Text>
+          </View>
+        )}
+
         <CustomButton
-          title="Criar Palestra"
-          handlePress={() => router.push('/create')}
+          title={isRunning ? 'Finalizar Palestra' : 'Iniciar Palestra'}
+          handlePress={handleTimerPress}
           containerStyles={styles.button}
         />
 
-        <CustomButton
-          title="Editar Palestra"
-          handlePress={() => {}}
-          containerStyles={styles.button}
-        />
-        */}
-
+        {isRunning && (
+          <Text style={styles.timerText}>
+            Tempo: {formatTime(seconds)}
+          </Text>
+        )}
       </ScrollView>
     </SafeAreaView>
   )
 }
 
 export default Home
+
 
 const styles = StyleSheet.create({
   container: {
@@ -69,7 +208,88 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-SemiBold'
   },
 
+  presentationText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#CDCDE0',
+    fontFamily: 'Poppins-Regular'
+  },
+  
+  loader: {
+    marginTop: 30
+  },
+
   button: {
     marginTop: 28
+  },
+  
+  errorText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#FF5252',
+    fontFamily: 'Poppins-Regular'
+  },
+  
+  presentationContainer: {
+    marginTop: 20,
+    padding: 16,
+    backgroundColor: '#1E1E2D',
+    borderRadius: 12,
+    borderColor: '#333',
+    borderWidth: 1,
+  },
+  
+  presentationTitle: {
+    fontSize: 20,
+    color: 'white',
+    fontFamily: 'Poppins-SemiBold',
+    marginBottom: 12
+  },
+  
+  presentationDetails: {
+    fontSize: 14,
+    color: '#CDCDE0',
+    fontFamily: 'Poppins-Regular',
+    marginBottom: 4
+  },
+  
+  presentationStatus: {
+    fontSize: 14,
+    color: '#CDCDE0',
+    fontFamily: 'Poppins-Regular',
+    marginTop: 4,
+    marginBottom: 12
+  },
+  
+  statusText: {
+    fontFamily: 'Poppins-SemiBold',
+  },
+
+  activeStatus: {
+    color: '#4CAF50',
+  },
+
+  completedStatus: {
+    color: '#2196F3',
+  },
+
+  scheduledStatus: {
+    color: '#FF8E01',
+  },
+  
+  presentationDescription: {
+    fontSize: 14,
+    color: '#CDCDE0',
+    fontFamily: 'Poppins-Regular',
+    marginTop: 12,
+    lineHeight: 20
+  },
+
+  timerText: {
+    color: 'white',
+    fontSize: 20,
+    marginTop: 20,
+    fontFamily: 'Poppins-Regular',
+    textAlign: 'center'
   }
 })

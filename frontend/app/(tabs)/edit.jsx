@@ -1,210 +1,257 @@
-// frontend/app/presentation/[id].jsx
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, router } from 'expo-router';
 
+import { View, Text, ScrollView, StyleSheet, Image, TextInput, ActivityIndicator } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
-import PresentationService from '../services/PresentationService';
-import FormField from '../../components/FormField';
-import CustomButton from '../../components/CustomButton';
-
-/* 
-Tentei me aventurar no BackEnd, não faço ideia se vai funcionar, porém
-fica aí a base do que precisar ser feito. Atualizar os dados da Palestra
-nessa página e na página Home, onde ficarão os dados da Palestra.
-*/
+import { images } from '../../constants'
+import CustomButton from '../../components/CustomButton'
+import { router } from 'expo-router'
+import PresentationService from '../services/PresentationService'
 
 const Edit = () => {
-  const params = useLocalSearchParams();
-  const id = params.id;
-  console.log("ID da palestra recebido:", id);
-
-  const [form, setForm] = useState({
-    title: '',
-    location: '',
-    date: '',
-    moreinfo: ''
-  });
-  const [loading, setLoading] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
+  const [presentationId, setPresentationId] = useState(null);
+  const [presentation, setPresentation] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
+  
+  // Campos do formulário
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [date, setDate] = useState('');
+  const [location, setLocation] = useState('');
+  
   useEffect(() => {
-    const fetchPresentation = async () => {
+    // Carregar o ID da palestra do AsyncStorage
+    const loadPresentationId = async () => {
       try {
-        setIsLoading(true);
-        const data = await PresentationService.getPresentationById(id);
-        if (data) {
-          setForm({
-            title: data.title || '',
-            location: data.location || '',
-            date: data.date || '',
-            moreinfo: data.moreinfo || ''
-          });
+        const id = await AsyncStorage.getItem('selectedPresentationId');
+        if (id) {
+          setPresentationId(id);
+          console.log('ID da palestra carregado:', id);
+          // Carregar os dados da palestra
+          fetchPresentationData(id);
         } else {
-          Alert.alert('Erro', 'Palestra não encontrada');
-          router.back();
+          setLoading(false);
         }
       } catch (error) {
-        console.error('Erro ao carregar palestra:', error);
-        Alert.alert('Erro', 'Não foi possível carregar a palestra.');
-        router.back();
-      } finally {
-        setIsLoading(false);
+        console.error('Erro ao carregar ID da palestra:', error);
+        setError('Erro ao carregar ID da palestra');
+        setLoading(false);
       }
     };
+    
+    loadPresentationId();
+  }, []);
 
-    if (id) {
-      fetchPresentation();
-    } else {
-      Alert.alert('Erro', 'ID da palestra não fornecido');
-      router.back();
-    }
-  }, [id]);
-
-  // Resto do código permanece o mesmo...
-  
-  // Adicionar um indicador de carregamento
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FF8E01" />
-          <Text style={styles.loadingText}>Carregando...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  const validateForm = () => {
-    if (!form.title.trim()) return Alert.alert('Erro', 'Título obrigatório');
-    if (!form.location.trim()) return Alert.alert('Erro', 'Local obrigatório');
-    if (!form.date.trim()) return Alert.alert('Erro', 'Data obrigatória');
-    return true;
-  };
-
-  const handleSave = async () => {
-    if (!validateForm()) return;
-
+  const fetchPresentationData = async (id) => {
     try {
       setLoading(true);
-      await PresentationService.updatePresentation(id, {
-        title: form.title,
-        location: form.location,
-        date: form.date,
-        moreinfo: form.moreinfo
-      });
-      Alert.alert('Sucesso', 'Palestra atualizada com sucesso!');
-      router.back();
+      
+      // Buscar dados da palestra usando o serviço
+      const data = await PresentationService.getPresentationById(id);
+      setPresentation(data);
+      
+      // Preencher os campos do formulário
+      setTitle(data.title || '');
+      setDescription(data.moreinfo || ''); // Usando moreinfo como descrição
+      setDate(data.date || '');
+      setLocation(data.location || '');
+      
+      setError(null);
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível atualizar.');
+      console.error('Erro ao carregar dados da palestra:', error);
+      setError('Não foi possível carregar os dados da palestra. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FF8E01" />
-          <Text style={styles.loadingText}>Carregando...</Text>
-        </View>
-      </SafeAreaView>
-    );
+  const handleSave = async () => {
+  try {
+    setSaving(true);
+    
+    const updatedPresentation = {
+      title,
+      moreinfo: description, // Usando description como moreinfo
+      date,
+      location
+    };
+    
+    // Atualizar a palestra usando o serviço
+    await PresentationService.updatePresentation(presentationId, updatedPresentation);
+    
+    // Navegar de volta para a home com parâmetro de atualização
+    router.push({
+      pathname: '/(tabs)/home',
+      params: { updated: 'true', timestamp: Date.now() }
+    });
+  } catch (error) {
+    console.error('Erro ao salvar palestra:', error);
+    setError('Não foi possível salvar as alterações. Tente novamente.');
+  } finally {
+    setSaving(false);
   }
+};
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollview}>
-        <Text style={styles.textstyle}>Editar Palestra</Text>
-
-        <FormField
-          title="Tema/Título da Palestra"
-          value={form.title}
-          placeholder="Informe o tema da palestra..."
-          handleChangeText={(e) => setForm({ ...form, title: e })}
-          otherStyles={styles.formfield1}
-        />
-
-        <FormField
-          title="Local da Palestra"
-          value={form.location}
-          placeholder="Informe o local da palestra..."
-          handleChangeText={(e) => setForm({ ...form, location: e })}
-          otherStyles={styles.formfield2}
-        />
-
-        <FormField
-          title="Data/Hora da Palestra"
-          value={form.date}
-          placeholder="Informe a data e hora..."
-          handleChangeText={(e) => setForm({ ...form, date: e })}
-          otherStyles={styles.formfield2}
-        />
-
-        <FormField
-          title="Informações adicionais"
-          value={form.moreinfo}
-          placeholder="Caso queira acrescentar algo..."
-          handleChangeText={(e) => setForm({ ...form, moreinfo: e })}
-          otherStyles={styles.formfield2}
-        />
-
-        <CustomButton
-          title="Salvar Alterações"
-          handlePress={handleSave}
-          containerStyles={styles.button}
-          isLoading={loading}
-        />
+        <Text style={styles.textstyle1}>
+          Editar Palestra
+        </Text>
+        
+        {loading ? (
+          <ActivityIndicator size="large" color="#FFA001" style={styles.loader} />
+        ) : error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : (
+          <View style={styles.formContainer}>
+            <Text style={styles.label}>Título</Text>
+            <TextInput
+              style={styles.input}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Título da palestra"
+              placeholderTextColor="#CDCDE0"
+            />
+            
+            <Text style={styles.label}>Descrição</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Descrição da palestra"
+              placeholderTextColor="#CDCDE0"
+              multiline
+              numberOfLines={4}
+            />
+            
+            <Text style={styles.label}>Data e Hora</Text>
+            <TextInput
+              style={styles.input}
+              value={date}
+              onChangeText={setDate}
+              placeholder="YYYY-MM-DD HH:MM"
+              placeholderTextColor="#CDCDE0"
+            />
+            
+            <Text style={styles.label}>Local</Text>
+            <TextInput
+              style={styles.input}
+              value={location}
+              onChangeText={setLocation}
+              placeholder="Local da palestra"
+              placeholderTextColor="#CDCDE0"
+            />
+            
+            {saving ? (
+              <ActivityIndicator size="large" color="#FFA001" style={styles.savingLoader} />
+            ) : (
+              <>
+                <CustomButton
+                  title="Salvar Alterações"
+                  handlePress={handleSave}
+                  containerStyles={styles.button}
+                />
+                
+                <CustomButton
+                  title="Cancelar"
+                  handlePress={() => router.push('/(tabs)/home')}
+                  containerStyles={[styles.button, styles.cancelButton]}
+                  textStyles={styles.cancelButtonText}
+                />
+              </>
+            )}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
-export default Edit;
+export default Edit
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#161622',
-    flex: 1
+    backgroundColor: "#161622",
+    height: "100%"
+  },
+
+  inova: {
+    width: 145,
+    height: 44
   },
 
   scrollview: {
     paddingHorizontal: 16,
-    paddingVertical: 24
+    marginVertical: 24,
   },
 
-  textstyle: {
-    marginTop: 25,
+  textstyle1: {
+    marginTop: 20,
     fontSize: 24,
     lineHeight: 32,
     color: 'white',
-    fontFamily: 'Poppins-SemiBold'
+    fontFamily: 'Poppins-SemiBold',
+    marginBottom: 20
   },
 
-  formfield1: {
-    marginTop: 40
-  },
-
-  formfield2: {
-    marginTop: 32
-  },
-
-  button: {
-    marginTop: 40
-  },
-
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  loader: {
+    marginTop: 30
   },
   
-  loadingText: {
-    color: 'white',
+  savingLoader: {
+    marginTop: 20
+  },
+  
+  errorText: {
     marginTop: 12,
     fontSize: 16,
+    color: '#FF5252',
     fontFamily: 'Poppins-Regular'
+  },
+  
+  formContainer: {
+    marginTop: 10
+  },
+  
+  label: {
+    fontSize: 16,
+    color: 'white',
+    fontFamily: 'Poppins-Medium',
+    marginBottom: 8
+  },
+  
+  input: {
+    backgroundColor: '#1E1E2D',
+    borderRadius: 8,
+    padding: 12,
+    color: 'white',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    marginBottom: 16,
+    borderColor: '#333',
+    borderWidth: 1,
+  },
+  
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top'
+  },
+  
+  button: {
+    marginTop: 16
+  },
+  
+  cancelButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#FFA001'
+  },
+  
+  cancelButtonText: {
+    color: '#FFA001'
   }
-});
+})
