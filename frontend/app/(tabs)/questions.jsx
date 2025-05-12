@@ -83,11 +83,6 @@ const Questions = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollview}>
-        <Image
-          source={images.inova}
-          resizeMode='contain'
-          style={styles.inova}
-        />
 
         <Text style={styles.textstyle1}>
           Perguntas

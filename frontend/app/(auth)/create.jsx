@@ -37,10 +37,10 @@ const Create = () => {
 
   const submit = async () => {
     if (!validateForm()) return;
-    
+
     try {
       setUploading(true);
-      
+
       // Garantir que os dados estejam no formato esperado pelo backend
       const presentationData = {
         title: form.title.trim(),
@@ -48,17 +48,17 @@ const Create = () => {
         date: form.date.trim(),
         moreinfo: form.moreinfo.trim()
       };
-      
+
       console.log('Enviando dados formatados:', presentationData);
-      
+
       const response = await PresentationService.createPresentation(presentationData);
-      
+
       Alert.alert(
-        'Sucesso', 
+        'Sucesso',
         `Palestra criada com sucesso!\nCódigo de acesso: ${response.accessCode}`,
         [
-          { 
-            text: 'OK', 
+          {
+            text: 'OK',
             onPress: () => router.push('/presentations')
           }
         ]
@@ -79,7 +79,7 @@ const Create = () => {
           resizeMode='contain'
           style={styles.inova}
         />
-  
+
         <Text style={styles.textstyle1}>
           Criar Palestra
         </Text>
@@ -119,8 +119,15 @@ const Create = () => {
         <CustomButton
           title="Enviar & Publicar"
           handlePress={submit}
-          containerStyles={styles.button}
+          containerStyles={styles.button1}
           isLoading={uploading}
+        />
+
+        <CustomButton
+          title="Cancelar"
+          handlePress={() => router.push('/(tabs)/home')}
+          containerStyles={[styles.button2, styles.cancelButton]}
+          textStyles={styles.cancelButtonText}
         />
 
       </ScrollView>
@@ -155,19 +162,50 @@ const styles = StyleSheet.create({
   },
 
   formfield1: {
-    marginTop: 40
+    marginTop: 36
   },
 
   formfield2: {
-    marginTop: 32
+    marginTop: 28
   },
 
   formfield3: {
 
-    marginTop: 32
+    marginTop: 28
   },
 
-  button: {
-    marginTop: 40
+  button1: {
+    marginTop: 30
+  },
+
+  button2: {
+    marginTop: 20
+  },
+
+  input: {
+    backgroundColor: '#1E1E2D',
+    borderRadius: 8,
+    padding: 12,
+    color: 'white',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    marginBottom: 16,
+    borderColor: '#333',
+    borderWidth: 1,
+  },
+
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top'
+  },
+
+  cancelButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#FFA001'
+  },
+
+  cancelButtonText: {
+    color: '#FFA001'
   }
 })

@@ -25,7 +25,7 @@ const Main = () => {
           </View>
 
           <Text style={styles.textstyle3}>
-            Para começar, selecione entre ALUNO ou PALESTRANTE. Vale ressaltar que somos o número 1 na UVV e estamos a incríveis 21 dias no ar!
+            Para começar, selecione entre ALUNO ou PALESTRANTE. Vale ressaltar que somos o número 1 na UVV e estamos a incríveis 1 mês no ar!
           </Text>
 
           <CustomButton

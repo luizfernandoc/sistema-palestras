@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, StyleSheet, Image, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, StyleSheet, Image, ActivityIndicator, Alert } from 'react-native'
 import React, { useEffect, useState, useRef } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -15,7 +15,7 @@ const Home = () => {
   const [presentation, setPresentation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Função para formatar datas
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -35,7 +35,7 @@ const Home = () => {
       return 'Data não disponível';
     }
   };
-  
+
   useEffect(() => {
     // Carregar o ID da palestra do AsyncStorage
     const loadPresentationId = async () => {
@@ -55,17 +55,18 @@ const Home = () => {
         setLoading(false);
       }
     };
-    
+
     loadPresentationId();
   }, [params.updated, params.timestamp]); // Recarregar quando os parâmetros mudarem
 
   const fetchPresentationData = async (id) => {
     try {
       setLoading(true);
-      
+
       // Buscar dados da palestra usando o serviço
       const data = await PresentationService.getPresentationById(id);
       setPresentation(data);
+      console.log(presentation)
       setError(null);
     } catch (error) {
       console.error('Erro ao carregar dados da palestra:', error);
@@ -96,19 +97,44 @@ const Home = () => {
     console.log('Palestra finalizada - tempo total:', seconds, 'segundos');
   };
 
-  const handleTimerPress = () => {
-    if (!isRunning) {
-      startTimer();
-    } else {
-      stopTimer();
+  const handleTimerPress = async () => {
+    try {
+      if (!isRunning) {
+        await PresentationService.startPresentation(presentationId); // Atualiza para "active"
+        startTimer();
+      } else {
+        await PresentationService.endPresentation(presentationId); // Atualiza para "completed"
+        stopTimer();
+      }
+
+      // Atualiza os dados da palestra após mudar o status
+      fetchPresentationData(presentationId);
+
+    } catch (error) {
+      console.error('Erro ao atualizar status da apresentação:', error);
+      alert('Erro ao atualizar status da palestra.');
     }
   };
 
-  const formatTime = (totalSeconds) => {
-    const hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-    const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-    const secs = String(totalSeconds % 60).padStart(2, '0');
-    return `${hrs}:${mins}:${secs}`;
+
+  const formatTime = (dateString) => {
+    if (!dateString) return '';
+
+    try {
+      const date = new Date(dateString);
+
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+
+      return 'Horário não disponível';
+    } catch (error) {
+      console.error('Erro ao formatar hora:', error, dateString);
+      return 'Horário não disponível';
+    }
   };
 
   return (
@@ -130,17 +156,36 @@ const Home = () => {
           <Text style={styles.errorText}>{error}</Text>
         ) : presentation ? (
           <View style={styles.presentationContainer}>
-            <Text style={styles.presentationTitle}>{presentation.title}</Text>
-            <Text style={styles.presentationDetails}>Data: {formatDate(presentation.date)}</Text>
-            {presentation.time && (
-              <Text style={styles.presentationDetails}>Horário: {presentation.time}</Text>
-            )}
+            <Text style={styles.presentationTitle}>
+              {presentation.title}
+            </Text>
+
             {presentation.location && (
-              <Text style={styles.presentationDetails}>Local: {presentation.location}</Text>
+              <Text style={styles.presentationDetails}>
+                Local: {presentation.location}
+              </Text>
             )}
-            {presentation.speaker && (
-              <Text style={styles.presentationDetails}>Palestrante: {presentation.speaker}</Text>
+
+            <Text style={styles.presentationDetails}>
+              Data: {formatDate(presentation.date)}
+            </Text>
+
+            <Text style={styles.presentationDetails}>
+              Horário: {formatTime(presentation.date)}
+            </Text>
+
+            {presentation.moreinfo && (
+              <Text style={styles.presentationDetails}>
+                Descrição: {presentation.moreinfo}
+              </Text>
             )}
+
+            {presentation.access_code && (
+              <Text style={styles.presentationDetails}>
+                Código de Acesso: {presentation.access_code}
+              </Text>
+            )}
+
             <Text style={styles.presentationStatus}>
               Status: <Text style={[
                 styles.statusText,
@@ -165,17 +210,21 @@ const Home = () => {
           </View>
         )}
 
-        <CustomButton
-          title={isRunning ? 'Finalizar Palestra' : 'Iniciar Palestra'}
-          handlePress={handleTimerPress}
-          containerStyles={styles.button}
-        />
+        {presentation?.status !== 'completed' && (
+          <CustomButton
+            title={isRunning ? 'Finalizar Palestra' : 'Iniciar Palestra'}
+            handlePress={handleTimerPress}
+            containerStyles={styles.button}
+          />
+        )}
 
+        {/*
         {isRunning && (
           <Text style={styles.timerText}>
             Tempo: {formatTime(seconds)}
           </Text>
         )}
+        */}
       </ScrollView>
     </SafeAreaView>
   )
@@ -214,7 +263,7 @@ const styles = StyleSheet.create({
     color: '#CDCDE0',
     fontFamily: 'Poppins-Regular'
   },
-  
+
   loader: {
     marginTop: 30
   },
@@ -222,14 +271,14 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 28
   },
-  
+
   errorText: {
     marginTop: 12,
     fontSize: 16,
     color: '#FF5252',
     fontFamily: 'Poppins-Regular'
   },
-  
+
   presentationContainer: {
     marginTop: 20,
     padding: 16,
@@ -238,29 +287,28 @@ const styles = StyleSheet.create({
     borderColor: '#333',
     borderWidth: 1,
   },
-  
+
   presentationTitle: {
     fontSize: 20,
     color: 'white',
     fontFamily: 'Poppins-SemiBold',
     marginBottom: 12
   },
-  
+
   presentationDetails: {
     fontSize: 14,
     color: '#CDCDE0',
     fontFamily: 'Poppins-Regular',
     marginBottom: 4
   },
-  
+
   presentationStatus: {
     fontSize: 14,
     color: '#CDCDE0',
     fontFamily: 'Poppins-Regular',
-    marginTop: 4,
     marginBottom: 12
   },
-  
+
   statusText: {
     fontFamily: 'Poppins-SemiBold',
   },
@@ -276,7 +324,7 @@ const styles = StyleSheet.create({
   scheduledStatus: {
     color: '#FF8E01',
   },
-  
+
   presentationDescription: {
     fontSize: 14,
     color: '#CDCDE0',

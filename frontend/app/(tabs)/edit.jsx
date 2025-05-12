@@ -1,11 +1,11 @@
-
-import { View, Text, ScrollView, StyleSheet, Image, TextInput, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import { images } from '../../constants'
 import CustomButton from '../../components/CustomButton'
+import FormField from '../../components/FormField'
 import { router } from 'expo-router'
 import PresentationService from '../services/PresentationService'
 
@@ -15,22 +15,18 @@ const Edit = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
-  
-  // Campos do formulário
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
   const [location, setLocation] = useState('');
-  
+
   useEffect(() => {
-    // Carregar o ID da palestra do AsyncStorage
     const loadPresentationId = async () => {
       try {
         const id = await AsyncStorage.getItem('selectedPresentationId');
         if (id) {
           setPresentationId(id);
-          console.log('ID da palestra carregado:', id);
-          // Carregar os dados da palestra
           fetchPresentationData(id);
         } else {
           setLoading(false);
@@ -41,24 +37,19 @@ const Edit = () => {
         setLoading(false);
       }
     };
-    
+
     loadPresentationId();
   }, []);
 
   const fetchPresentationData = async (id) => {
     try {
       setLoading(true);
-      
-      // Buscar dados da palestra usando o serviço
       const data = await PresentationService.getPresentationById(id);
       setPresentation(data);
-      
-      // Preencher os campos do formulário
       setTitle(data.title || '');
-      setDescription(data.moreinfo || ''); // Usando moreinfo como descrição
+      setDescription(data.moreinfo || '');
       setDate(data.date || '');
       setLocation(data.location || '');
-      
       setError(null);
     } catch (error) {
       console.error('Erro ao carregar dados da palestra:', error);
@@ -69,83 +60,74 @@ const Edit = () => {
   };
 
   const handleSave = async () => {
-  try {
-    setSaving(true);
-    
-    const updatedPresentation = {
-      title,
-      moreinfo: description, // Usando description como moreinfo
-      date,
-      location
-    };
-    
-    // Atualizar a palestra usando o serviço
-    await PresentationService.updatePresentation(presentationId, updatedPresentation);
-    
-    // Navegar de volta para a home com parâmetro de atualização
-    router.push({
-      pathname: '/(tabs)/home',
-      params: { updated: 'true', timestamp: Date.now() }
-    });
-  } catch (error) {
-    console.error('Erro ao salvar palestra:', error);
-    setError('Não foi possível salvar as alterações. Tente novamente.');
-  } finally {
-    setSaving(false);
-  }
-};
+    try {
+      setSaving(true);
+      const updatedPresentation = {
+        title,
+        moreinfo: description,
+        date,
+        location
+      };
+
+      await PresentationService.updatePresentation(presentationId, updatedPresentation);
+
+      router.push({
+        pathname: '/(tabs)/home',
+        params: { updated: 'true', timestamp: Date.now() }
+      });
+    } catch (error) {
+      console.error('Erro ao salvar palestra:', error);
+      setError('Não foi possível salvar as alterações. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollview}>
-        <Text style={styles.textstyle1}>
-          Editar Palestra
-        </Text>
-        
+        <Text style={styles.textstyle1}>Editar Palestra</Text>
+
         {loading ? (
           <ActivityIndicator size="large" color="#FFA001" style={styles.loader} />
         ) : error ? (
           <Text style={styles.errorText}>{error}</Text>
         ) : (
           <View style={styles.formContainer}>
-            <Text style={styles.label}>Título</Text>
-            <TextInput
-              style={styles.input}
+            <FormField
+              title="Título"
               value={title}
-              onChangeText={setTitle}
               placeholder="Título da palestra"
-              placeholderTextColor="#CDCDE0"
+              handleChangeText={setTitle}
+              otherStyles={styles.formField1}
             />
-            
-            <Text style={styles.label}>Descrição</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
+
+            <FormField
+              title="Descrição"
               value={description}
-              onChangeText={setDescription}
               placeholder="Descrição da palestra"
-              placeholderTextColor="#CDCDE0"
+              handleChangeText={setDescription}
+              otherStyles={styles.formField}
               multiline
               numberOfLines={4}
             />
-            
-            <Text style={styles.label}>Data e Hora</Text>
-            <TextInput
-              style={styles.input}
+
+            <FormField
+              title="Data e Hora"
               value={date}
-              onChangeText={setDate}
               placeholder="YYYY-MM-DD HH:MM"
-              placeholderTextColor="#CDCDE0"
+              handleChangeText={setDate}
+              otherStyles={styles.formField}
             />
-            
-            <Text style={styles.label}>Local</Text>
-            <TextInput
-              style={styles.input}
+
+            <FormField
+              title="Local"
               value={location}
-              onChangeText={setLocation}
               placeholder="Local da palestra"
-              placeholderTextColor="#CDCDE0"
+              handleChangeText={setLocation}
+              otherStyles={styles.formField}
             />
-            
+
             {saving ? (
               <ActivityIndicator size="large" color="#FFA001" style={styles.savingLoader} />
             ) : (
@@ -155,7 +137,7 @@ const Edit = () => {
                   handlePress={handleSave}
                   containerStyles={styles.button}
                 />
-                
+
                 <CustomButton
                   title="Cancelar"
                   handlePress={() => router.push('/(tabs)/home')}
@@ -168,20 +150,15 @@ const Edit = () => {
         )}
       </ScrollView>
     </SafeAreaView>
-  )
-}
+  );
+};
 
-export default Edit
+export default Edit;
 
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#161622",
     height: "100%"
-  },
-
-  inova: {
-    width: 145,
-    height: 44
   },
 
   scrollview: {
@@ -201,57 +178,41 @@ const styles = StyleSheet.create({
   loader: {
     marginTop: 30
   },
-  
+
   savingLoader: {
     marginTop: 20
   },
-  
+
   errorText: {
     marginTop: 12,
     fontSize: 16,
     color: '#FF5252',
     fontFamily: 'Poppins-Regular'
   },
-  
+
   formContainer: {
     marginTop: 10
   },
-  
-  label: {
-    fontSize: 16,
-    color: 'white',
-    fontFamily: 'Poppins-Medium',
-    marginBottom: 8
+
+  formField1: {
+    marginTop: 8
   },
   
-  input: {
-    backgroundColor: '#1E1E2D',
-    borderRadius: 8,
-    padding: 12,
-    color: 'white',
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    marginBottom: 16,
-    borderColor: '#333',
-    borderWidth: 1,
+  formField: {
+    marginTop: 18
   },
-  
-  textArea: {
-    height: 100,
-    textAlignVertical: 'top'
-  },
-  
+
   button: {
-    marginTop: 16
+    marginTop: 18
   },
-  
+
   cancelButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#FFA001'
   },
-  
+
   cancelButtonText: {
     color: '#FFA001'
   }
-})
+});

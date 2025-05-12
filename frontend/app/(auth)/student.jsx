@@ -1,23 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import CustomButton from '../../components/CustomButton';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Camera, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import CustomButton from '../../components/CustomButton';
 
 const Student = () => {
   const [name, setName] = useState('');
-  const [hasPermission, setHasPermission] = useState(null);
   const [scanning, setScanning] = useState(false);
+  const [scanned, setScanned] = useState(false);
   const [anonCount, setAnonCount] = useState(1);
+  const cameraRef = useRef(null);
+
+  const [permission, requestPermission] = useCameraPermissions();
 
   useEffect(() => {
-    (async () => {
-      const { status } = await BarCodeScanner.requestPermissionsAsync();
-      setHasPermission(status === 'granted');
-    })();
-  }, []);
+    if (!permission) {
+      requestPermission();
+    }
+  }, [permission]);
 
   const handleContinue = async () => {
     if (!name.trim()) {
@@ -25,7 +27,8 @@ const Student = () => {
       return;
     }
     await AsyncStorage.setItem('studentName', name);
-    setScanning(true); // Vai exibir o scanner
+    setScanning(true);
+    setScanned(false);
   };
 
   const handleAnonymous = async () => {
@@ -35,16 +38,22 @@ const Student = () => {
   };
 
   const handleBarCodeScanned = ({ type, data }) => {
+    if (scanned) return;
+
+    setScanned(true);
     setScanning(false);
-    // Redirecionar para a palestra com base no código escaneado
     router.push(`/student/presentation/${data}`);
   };
 
-  if (scanning && hasPermission) {
+  if (scanning && permission?.granted) {
     return (
-      <BarCodeScanner
-        onBarCodeScanned={handleBarCodeScanned}
+      <Camera
+        ref={cameraRef}
         style={{ flex: 1 }}
+        onBarCodeScanned={handleBarCodeScanned}
+        barCodeScannerSettings={{
+          barCodeTypes: ['qr'],
+        }}
       />
     );
   }
@@ -60,14 +69,14 @@ const Student = () => {
         value={name}
       />
       <CustomButton
-        title="Entrar como Anônimo" 
+        title="Entrar como Anônimo"
         handlePress={handleAnonymous}
-        containerStyles={styles.button} 
+        containerStyles={styles.button}
       />
-      <CustomButton 
-        title="Continuar e Escanear QR Code" 
+      <CustomButton
+        title="Digite código da Palestra"
         handlePress={handleContinue}
-        containerStyles={styles.button} 
+        containerStyles={styles.button}
       />
     </SafeAreaView>
   );
@@ -80,17 +89,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#161622',
     padding: 16,
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
-  
   title: {
     fontSize: 24,
     color: 'white',
     marginBottom: 20,
     textAlign: 'center',
-    fontFamily: 'Poppins-SemiBold'
+    fontFamily: 'Poppins-SemiBold',
   },
-
   input: {
     borderWidth: 1,
     borderColor: '#555',
@@ -99,10 +106,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    marginBottom: 16
+    marginBottom: 16,
   },
-
   button: {
-    marginTop: 28
+    marginTop: 28,
   },
 });
