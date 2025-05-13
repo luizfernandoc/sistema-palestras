@@ -61,6 +61,32 @@ const authService = {
       throw error;
     }
   },
+
+  async loginStudent(credentials) {
+    try {
+      const response = await fetch(`${API_URL}/auth/registerAudience`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials)
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Credenciais inválidas');
+      }
+      
+      // Armazenar token e dados do usuário no AsyncStorage
+      await AsyncStorage.setItem('token', data.token);
+      await AsyncStorage.setItem('user', JSON.stringify(data.user));
+      
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
   
   async logout() {
     await AsyncStorage.removeItem('token');
