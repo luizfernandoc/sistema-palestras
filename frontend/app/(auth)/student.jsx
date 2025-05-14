@@ -54,7 +54,7 @@ const Student = () => {
     }
 
     await AsyncStorage.setItem('studentName', name);
-    router.push(`/student/presentation/${accessCode}`);
+    router.push(`/student/${accessCode}/home`);
   };
 
   return (

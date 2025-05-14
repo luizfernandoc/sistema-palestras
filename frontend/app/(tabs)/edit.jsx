@@ -108,8 +108,6 @@ const Edit = () => {
               placeholder="Descrição da palestra"
               handleChangeText={setDescription}
               otherStyles={styles.formField}
-              multiline
-              numberOfLines={4}
             />
 
             <FormField
