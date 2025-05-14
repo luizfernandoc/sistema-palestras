@@ -2,16 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Alert, Pressable, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 
 import CustomButton from '../../components/CustomButton';
 import FormField from '../../components/FormField';
 import { images } from '../../constants';
+import authService from '../services/authService';  // Adicione esta importação
 
 const Student = () => {
   const [name, setName] = useState('');
   const [accessCode, setAccessCode] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [usedAnonNames, setUsedAnonNames] = useState(new Set());
   const [showAccessCodeCard, setShowAccessCodeCard] = useState(false);
 
@@ -53,8 +55,42 @@ const Student = () => {
       return;
     }
 
-    await AsyncStorage.setItem('studentName', name);
-    router.push(`/student/${accessCode}/home`);
+    setIsSubmitting(true)
+
+    try {
+      // Usando authService em vez de fetch diretamente
+      const result = await authService.loginStudent({
+        name: form.name,
+        accessCode: form.accessCode
+      })
+
+      console.log('Login realizado com sucesso:', result)
+
+      Alert.alert(
+        'Sucesso',
+        'Login realizado com sucesso!',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              console.log('Redirecionando para home...')
+              router.replace('/logged') // Mudar aba
+            }
+          }
+        ],
+        { cancelable: false }
+      )
+    } catch (error) {
+      console.error('Erro ao fazer login:', error)
+      Alert.alert(
+        'Erro',
+        error.message || 'Credenciais inválidas',
+        [{ text: 'OK' }],
+        { cancelable: false }
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   };
 
   return (

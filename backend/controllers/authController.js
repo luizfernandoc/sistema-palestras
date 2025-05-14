@@ -1,6 +1,7 @@
 // controllers/authController.js
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Presentation = require('../models/Presentation');
 require('dotenv').config();
 
 exports.register = async (req, res) => {
@@ -33,9 +34,15 @@ exports.register = async (req, res) => {
 
 exports.registerAudience = async (req, res) => {
   try {
-    const accessCode = req.params.accessCode;
-    const { name } = req.body;
-     
+    const { name, accessCode } = req.body;
+    const presentation = await Presentation.findByCode(accessCode);
+
+    if (!presentation) {
+      return res.status(401).json({
+        message: 'Palestra não encontrada'
+      });
+    }
+
     // Criar usuário
     const user = await User.createAudience({ name, accessCode });
 
