@@ -10,5 +10,6 @@ router.get('/', (req, res) => {
 
 router.post('/create', audienceQuestionController.createAudienceQuestion);
 router.put('/like/:id', audienceQuestionController.likeAudienceQuestion);
+router.get('/questions/:accessCode', audienceQuestionController.getAudienceQuestionsByPresentation);
 
 module.exports = router;

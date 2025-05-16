@@ -36,11 +36,11 @@ exports.createAudienceQuestion = async (req, res) => {
 
 exports.getAudienceQuestionsByPresentation = async (req, res) => {
   try {
-    const presentationId = req.params.id;
+    const accessCode = req.params.accessCode;
     
     const [questions] = await db.execute(
-      'SELECT * FROM audience_questions WHERE presentation_id = ? ORDER BY likes DESC, created_at DESC',
-      [presentationId]
+      'SELECT audience_questions.* FROM audience_questions INNER JOIN presentations ON audience_questions.presentation_id = presentations.id WHERE presentations.access_code = ? ORDER BY audience_questions.likes DESC, audience_questions.created_at DESC', 
+      [accessCode]
     );
     
     res.status(200).json({
