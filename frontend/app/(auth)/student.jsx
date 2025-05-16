@@ -17,6 +17,8 @@ const Student = () => {
   const [usedAnonNames, setUsedAnonNames] = useState(new Set());
   const [showAccessCodeCard, setShowAccessCodeCard] = useState(false);
 
+  const router = useRouter();
+
   useEffect(() => {
     if (isAnonymous) {
       generateUniqueAnonymousName();
@@ -55,41 +57,43 @@ const Student = () => {
       return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
-      // Usando authService em vez de fetch diretamente
+      // Autenticar (opcional se quiser verificar com backend)
       const result = await authService.loginStudent({
-        name: form.name,
-        accessCode: form.accessCode
-      })
+        name,
+        accessCode
+      });
 
-      console.log('Login realizado com sucesso:', result)
+      console.log('Login realizado com sucesso:', result);
 
-      Alert.alert(
+      {/*Alert.alert(
         'Sucesso',
         'Login realizado com sucesso!',
         [
           {
             text: 'OK',
             onPress: () => {
-              console.log('Redirecionando para home...')
-              router.replace('/logged') // Mudar aba
+              // Redirecionar para rota dinâmica da palestra
+              router.push(`/student/${accessCode}/home`);
             }
           }
         ],
         { cancelable: false }
-      )
+      );*/}
+      router.replace(`/student/${accessCode}/home`);
+
     } catch (error) {
-      console.error('Erro ao fazer login:', error)
+      console.error('Erro ao fazer login:', error);
       Alert.alert(
         'Erro',
         error.message || 'Credenciais inválidas',
         [{ text: 'OK' }],
         { cancelable: false }
-      )
+      );
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   };
 

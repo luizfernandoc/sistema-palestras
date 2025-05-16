@@ -99,23 +99,21 @@ const Home = () => {
 
   const handleTimerPress = async () => {
     try {
-      if (!isRunning) {
-        await PresentationService.startPresentation(presentationId); // Atualiza para "active"
-        startTimer();
+      if (presentation?.status === 'active') {
+        await PresentationService.endPresentation(presentationId); // Muda para "completed"
+        stopTimer(); // Aqui ainda pode salvar o tempo
       } else {
-        await PresentationService.endPresentation(presentationId); // Atualiza para "completed"
-        stopTimer();
+        await PresentationService.startPresentation(presentationId); // Muda para "active"
+        startTimer();
       }
 
-      // Atualiza os dados da palestra após mudar o status
-      fetchPresentationData(presentationId);
+      fetchPresentationData(presentationId); // Atualiza os dados no front
 
     } catch (error) {
       console.error('Erro ao atualizar status da apresentação:', error);
       alert('Erro ao atualizar status da palestra.');
     }
   };
-
 
   const formatTime = (dateString) => {
     if (!dateString) return '';
@@ -212,7 +210,7 @@ const Home = () => {
 
         {presentation?.status !== 'completed' && (
           <CustomButton
-            title={isRunning ? 'Finalizar Palestra' : 'Iniciar Palestra'}
+            title={presentation?.status === 'active' ? 'Finalizar Palestra' : 'Iniciar Palestra'}
             handlePress={handleTimerPress}
             containerStyles={styles.button}
           />

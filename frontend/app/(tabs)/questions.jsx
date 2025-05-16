@@ -1,116 +1,77 @@
-import { View, Text, ScrollView, StyleSheet, Image, ActivityIndicator, FlatList } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+'use client';
 
-import { images } from '../../constants'
-import CustomButton from '../../components/CustomButton'
-import { router } from 'expo-router'
-import { fetchApi } from '../config/api'
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, RefreshControl, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import PresentationService from '../services/PresentationService';
+import QuestionService from '../services/QuestionService';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const Questions = () => {
-  const [presentationId, setPresentationId] = useState(null);
+export default function Questions() {
   const [questions, setQuestions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  useEffect(() => {
-    // Carregar o ID da palestra do AsyncStorage
-    const loadPresentationId = async () => {
-      try {
-        const id = await AsyncStorage.getItem('selectedPresentationId');
-        if (id) {
-          setPresentationId(id);
-          console.log('ID da palestra carregado:', id);
-          // Carregar as perguntas da palestra
-          fetchQuestions(id);
-        } else {
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar ID da palestra:', error);
-        setError('Erro ao carregar ID da palestra');
-        setLoading(false);
-      }
-    };
-    
-    loadPresentationId();
-  }, []);
+  const [loading, setLoading] = useState(false);
+  const [presentation, setPresentation] = useState(null);
 
-  const fetchQuestions = async (id) => {
+  const loadPresentationAndQuestions = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      
-      // Tente buscar da API real
-      try {
-        const data = await fetchApi(`/presentations/${id}/questions`);
-        setQuestions(data);
-      } catch (apiError) {
-        console.log('Usando dados mock devido a erro na API:', apiError);
-        
-        // Fallback para dados mock em caso de erro
-        const mockQuestions = [
-          { id: '1', text: 'Qual é o objetivo principal desta palestra?', author: 'Maria Silva', timestamp: '2023-05-15T14:30:00' },
-          { id: '2', text: 'Poderia explicar mais sobre o segundo tópico?', author: 'João Santos', timestamp: '2023-05-15T14:35:00' },
-          { id: '3', text: 'Haverá material complementar disponível após a palestra?', author: 'Ana Oliveira', timestamp: '2023-05-15T14:40:00' }
-        ];
-        
-        setQuestions(mockQuestions);
+      const storedId = await AsyncStorage.getItem('selectedPresentationId');
+      if (storedId) {
+        const pres = await PresentationService.getPresentationById(storedId);
+        setPresentation(pres);
+
+        const q = await QuestionService.getQuestionsByAccessCode(pres.access_code);
+        setQuestions(q.questions || []);
+      } else {
+        setQuestions([]);
+        setPresentation(null);
       }
     } catch (error) {
       console.error('Erro ao carregar perguntas:', error);
-      setError('Erro ao carregar perguntas');
+      setQuestions([]);
+      setPresentation(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const renderQuestion = ({ item }) => {
-    const date = new Date(item.timestamp);
-    const formattedTime = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    
-    return (
-      <View style={styles.questionCard}>
-        <Text style={styles.questionText}>{item.text}</Text>
-        <View style={styles.questionMeta}>
-          <Text style={styles.questionAuthor}>{item.author}</Text>
-          <Text style={styles.questionTime}>{formattedTime}</Text>
-        </View>
-      </View>
-    );
-  };
+  useEffect(() => {
+    loadPresentationAndQuestions();
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollview}>
+      <ScrollView style={styles.scrollview} refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={loadPresentationAndQuestions} />
+        }
+      >
+        <Text style={styles.title}>Perguntas Recebidas</Text>
 
-        <Text style={styles.textstyle1}>
-          Perguntas
-        </Text>
-        
-        {loading ? (
-          <ActivityIndicator size="large" color="#FFA001" style={styles.loader} />
-        ) : error ? (
-          <Text style={styles.errorText}>{error}</Text>
-        ) : questions.length > 0 ? (
-          <FlatList
-            data={questions}
-            renderItem={renderQuestion}
-            keyExtractor={item => item.id}
-            style={styles.questionsList}
-            scrollEnabled={false}
-          />
-        ) : (
-          <Text style={styles.noQuestionsText}>
-            Nenhuma pergunta disponível para esta palestra.
-          </Text>
+        {presentation && (
+          <View style={styles.presentationContainer}>
+            <Text style={styles.presentationTitle}>{presentation.title}</Text>
+            <Text style={styles.presentationDetails}>Código: {presentation.access_code}</Text>
+          </View>
         )}
+
+        {loading && <ActivityIndicator size="large" color="#FFA001" style={{ marginTop: 20 }} />}
+
+        {questions.length === 0 && !loading && (
+          <Text style={styles.emptyText}>Nenhuma pergunta recebida ainda.</Text>
+        )}
+
+        {questions.map((item) => (
+          <View key={item.id} style={styles.questionContainer}>
+            <Text style={styles.questionText}>{item.text}</Text>
+            <Text style={styles.questionAuthor}>
+              Enviado por: {item.student_name || 'Anônimo'}
+            </Text>
+          </View>
+        ))}
       </ScrollView>
     </SafeAreaView>
-  )
+  );
 }
-
-export default Questions
 
 const styles = StyleSheet.create({
   container: {
@@ -119,15 +80,68 @@ const styles = StyleSheet.create({
   },
 
   scrollview: {
-    paddingHorizontal: 16,
-    marginVertical: 24,
+    paddingHorizontal: 8,
+    marginVertical: 12,
   },
 
-  textstyle1: {
-    marginTop: 20,
-    fontSize: 24,
-    lineHeight: 32,
+  title: {
+    marginTop: 20, // essa porra
+    fontSize: 22,
+    lineHeight: 28,
     color: 'white',
-    fontFamily: 'Poppins-SemiBold'
+    fontFamily: 'Poppins-SemiBold',
+    marginBottom: 16,
   },
-})
+
+  presentationContainer: {
+    backgroundColor: '#1E1E2D',
+    padding: 12,
+    borderRadius: 12,
+    borderColor: '#333',
+    borderWidth: 1,
+    marginBottom: 20,
+  },
+
+  presentationTitle: {
+    fontSize: 18,
+    color: 'white',
+    fontFamily: 'Poppins-SemiBold',
+    marginBottom: 4,
+  },
+
+  presentationDetails: {
+    fontSize: 14,
+    color: '#CDCDE0',
+    fontFamily: 'Poppins-Regular',
+  },
+
+  questionContainer: {
+    backgroundColor: '#1E1E2D',
+    padding: 12,
+    borderRadius: 10,
+    borderColor: '#333',
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+
+  questionText: {
+    fontSize: 16,
+    color: 'white',
+    fontFamily: 'Poppins-Regular',
+  },
+
+  questionAuthor: {
+    fontSize: 12,
+    color: '#CDCDE0',
+    fontFamily: 'Poppins-Regular',
+    marginTop: 6,
+  },
+
+  emptyText: {
+    fontSize: 16,
+    color: '#CDCDE0',
+    fontFamily: 'Poppins-Regular',
+    marginTop: 20,
+    textAlign: 'center',
+  },
+});
