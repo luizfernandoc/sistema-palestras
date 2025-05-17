@@ -178,12 +178,6 @@ const Home = () => {
               </Text>
             )}
 
-            {presentation.access_code && (
-              <Text style={styles.presentationDetails}>
-                Código de Acesso: {presentation.access_code}
-              </Text>
-            )}
-
             <Text style={styles.presentationStatus}>
               Status: <Text style={[
                 styles.statusText,
@@ -208,6 +202,16 @@ const Home = () => {
           </View>
         )}
 
+        {presentation && (
+          <View style={styles.accessCodeContainer}>
+            {presentation.access_code && (
+              <Text style={styles.accessCodeText}>
+                Código de Acesso: <Text style={styles.accessCode}>{presentation.access_code}</Text>
+              </Text>
+            )}
+          </View>
+        )}
+
         {presentation?.status !== 'completed' && (
           <CustomButton
             title={presentation?.status === 'active' ? 'Finalizar Palestra' : 'Iniciar Palestra'}
@@ -217,10 +221,10 @@ const Home = () => {
         )}
 
         <CustomButton
-                  title='Voltar'
-                  handlePress={() => router.push('/logged')}
-                  containerStyles={[styles.button2, styles.backButton]}
-                  textStyles={styles.textBackButton}
+          title='Voltar'
+          handlePress={() => router.push('/logged')}
+          containerStyles={[styles.button2, styles.backButton]}
+          textStyles={styles.textBackButton}
         />
 
         {/*
@@ -274,7 +278,7 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    marginTop: 28
+    marginTop: 280 // alterar
   },
 
   errorText: {
@@ -286,7 +290,7 @@ const styles = StyleSheet.create({
 
   presentationContainer: {
     marginTop: 20,
-    padding: 16,
+    padding: 14,
     backgroundColor: '#1E1E2D',
     borderRadius: 12,
     borderColor: '#333',
@@ -305,6 +309,21 @@ const styles = StyleSheet.create({
     color: '#CDCDE0',
     fontFamily: 'Poppins-Regular',
     marginBottom: 4
+  },
+
+  accessCodeContainer: {
+    marginTop: 26,
+    alignItems: 'center'
+  },
+
+  accessCodeText: {
+    color: '#CDCDE0',
+    fontSize: 18,
+    fontFamily: 'Poppins-SemiBold'
+  },
+
+  accessCode: {
+    color: '#FF8E01',
   },
 
   presentationStatus: {

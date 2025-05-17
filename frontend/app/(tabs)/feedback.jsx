@@ -2,19 +2,19 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-const Profile = () => {
+const Feedback = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollview}>
-        <Text style={styles.textstyle1}>
-          Profile
+        <Text style={styles.textstyle}>
+          Feedback
         </Text>
       </ScrollView>
     </SafeAreaView>
   )
 }
 
-export default Profile
+export default Feedback
 
 const styles = StyleSheet.create({
   container: {
@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     marginVertical: 24,
   },
 
-  textstyle1: {
+  textstyle: {
     marginTop: 20,
     fontSize: 24,
     lineHeight: 32,

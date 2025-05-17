@@ -4,16 +4,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native'; // Adicionar esta importação
 
 
-const API_URL = Platform.OS === 'web' 
+const API_URL = Platform.OS === 'web'
   ? 'http://localhost:5000/api'  // Para desenvolvimento web
-  : 'http://192.168.0.2:5000/api'; // Substitua pelo IP do seu computador
+  : 'http://192.168.136.1:5000/api'; // Substitua pelo IP do seu computador
 
 class PresentationService {
   constructor() {
     this.api = axios.create({
       baseURL: API_URL
     });
-    
+
     // Interceptor para adicionar o token de autenticação em todas as requisições
     this.api.interceptors.request.use(async (config) => {
       const token = await AsyncStorage.getItem('token');
@@ -28,18 +28,18 @@ class PresentationService {
     try {
       const token = await AsyncStorage.getItem('token');
       if (!token) throw new Error('Token não encontrado');
-      
+
       const response = await this.api.get('/user/profile', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       return response.data;
     } catch (error) {
       console.error('Erro ao obter informações do usuário:', error);
       throw this._handleError(error);
     }
   }
-  
+
   async createPresentation(presentationData) {
     try {
       // Garantir que nenhum valor seja undefined
@@ -49,9 +49,9 @@ class PresentationService {
         date: presentationData.date || '',
         moreinfo: presentationData.moreinfo || null // Usar null em vez de undefined
       };
-      
+
       console.log('Enviando dados sanitizados:', sanitizedData);
-      
+
       const response = await this.api.post('/presentations', sanitizedData);
       console.log('Resposta do servidor:', response.data);
       return response.data;
@@ -80,6 +80,27 @@ class PresentationService {
       return response.data.presentation;
     } catch (error) {
       console.error('Error fetching presentation by access code:', error);
+      throw this._handleError(error);
+    }
+  }
+
+  async getFeedbackQuestions(presentationId) {
+    const response = await this.api.get('/feedback/');
+    return response.data.questions; // espera um array de strings
+  }
+
+  async submitFeedback(presentationId, answers) {
+    return this.api.post('/', { answers });
+  }
+
+  // Busca todos os feedbacks enviados para uma apresentação
+  async getAllFeedbacks(presentationId) {
+    try {
+      const response = await this.api.get(`/presentations/${presentationId}/feedback`);
+      // Supondo que o backend retorne algo como: { feedbacks: [ [3,4,5], [2,3,4], ... ] }
+      return response.data.feedbacks;
+    } catch (error) {
+      console.error('Erro ao buscar todos feedbacks:', error);
       throw this._handleError(error);
     }
   }

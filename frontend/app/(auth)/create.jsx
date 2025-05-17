@@ -124,8 +124,8 @@ const Create = () => {
         />
 
         <CustomButton
-          title="Cancelar"
-          handlePress={() => router.push('/(tabs)/home')}
+          title="Voltar"
+          handlePress={() => router.push('/logged')}
           containerStyles={[styles.button2, styles.cancelButton]}
           textStyles={styles.cancelButtonText}
         />

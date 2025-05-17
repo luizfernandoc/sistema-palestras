@@ -6,7 +6,7 @@ import { Platform } from 'react-native';
 // Definir a URL da API baseada na plataforma
 const API_URL = Platform.OS === 'web'
   ? 'http://localhost:5000/api'
-  : 'http://192.168.0.2:5000/api'; // Substitua pelo IP do seu computador na rede local
+  : 'http://192.168.136.1:5000/api'; // Substitua pelo IP do seu computador na rede local
 
 const authService = {
   async register(userData) {

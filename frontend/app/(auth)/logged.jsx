@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
 
   containerstyles2: {
     width: '90%',
-    marginTop: 20
+    marginTop: 10
   },
 
   cardContainer: {

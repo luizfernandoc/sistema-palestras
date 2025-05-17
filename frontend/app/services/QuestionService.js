@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 
 const API_URL = Platform.OS === 'web'
   ? 'http://localhost:5000/api'
-  : 'http://192.168.0.2:5000/api'; // Substitua pelo IP do seu computador
+  : 'http://192.168.136.1:5000/api'; // Substitua pelo IP do seu computador
 
 class QuestionService {
   constructor() {
@@ -37,13 +37,13 @@ class QuestionService {
   // Enviar uma nova pergunta
   async sendQuestion(questionData) {
     try {
-      console.log('Enviando pergunta:', questionData);
+      console.log('Enviando pergunta com dados:', questionData);
       const response = await this.api.post('/questions/student', {
         access_code: questionData.access_code,
         text: questionData.text,
-        student_name: questionData.student_name || 'Anônimo'
+        student_name: questionData.student_name // Garantir que o nome está sendo enviado
       });
-      console.log('Resposta do servidor:', response.data);
+      console.log('Resposta do servidor ao enviar pergunta:', response.data);
       return response.data;
     } catch (error) {
       console.error('Erro ao enviar pergunta:', error.response?.data || error.message);

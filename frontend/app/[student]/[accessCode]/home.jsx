@@ -6,6 +6,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { images } from '../../../constants'
 import PresentationService from '../../services/PresentationService'
 
+import { router } from 'expo-router'
+import CustomButton from '../../../components/CustomButton'
+
 const StudentHome = () => {
   const [presentationId, setPresentationId] = useState(null)
   const [presentation, setPresentation] = useState(null)
@@ -107,6 +110,13 @@ const StudentHome = () => {
         ) : (
           <Text style={styles.presentationText}>Nenhuma palestra selecionada</Text>
         )}
+
+        <CustomButton
+          title='Voltar'
+          handlePress={() => router.push('/student')}
+          containerStyles={[styles.button2, styles.backButton]}
+          textStyles={styles.textBackButton}
+        />
       </ScrollView>
     </SafeAreaView>
   )
@@ -136,6 +146,20 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     color: 'white',
     fontFamily: 'Poppins-SemiBold'
+  },
+  
+  button2: {
+    marginTop: 20
+  },
+
+  backButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#FFA001',
+  },
+
+  textBackButton: {
+    color: '#FFA001',
   },
 
   presentationText: {

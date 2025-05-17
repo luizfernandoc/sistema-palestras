@@ -79,8 +79,7 @@ const Student = () => {
       
       console.log('Login realizado com sucesso (modo de teste)');
       
-      // Redirecionar para a página de perguntas do estudante
-      router.replace(`/student/${accessCode}/questions`);
+      router.replace(`/student/${accessCode}/home`);
     } catch (error) {
       console.error('Erro ao fazer login:', error);
       Alert.alert('Erro', 'Não foi possível fazer login. Tente novamente.');
