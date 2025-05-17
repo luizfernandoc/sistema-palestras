@@ -1,3 +1,4 @@
+// c:\Users\luizf\Desktop\Nova_pasta_(6)\sistema-palestras\frontend\app\[student]\[accessCode]\questions.jsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -7,7 +8,6 @@ import PresentationService from '../../services/PresentationService';
 import QuestionService from '../../services/QuestionService';
 import FormField from '../../../components/FormField';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import CustomButton from '../../../components/CustomButton';
 
 export default function Questions() {
@@ -16,22 +16,41 @@ export default function Questions() {
   const [questionText, setQuestionText] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  
+  // Obter o código de acesso da URL
+  const [accessCode, setAccessCode] = useState('');
+  
+  useEffect(() => {
+    // Extrair o código de acesso da URL
+    if (typeof window !== 'undefined') {
+      const pathParts = window.location.pathname.split('/');
+      // Encontrar o índice após "student" na URL
+      const studentIndex = pathParts.findIndex(part => part === 'student');
+      if (studentIndex !== -1 && pathParts.length > studentIndex + 1) {
+        const code = pathParts[studentIndex + 1];
+        console.log('Código de acesso extraído da URL:', code);
+        setAccessCode(code);
+      } else {
+        console.error('Não foi possível extrair o código de acesso da URL');
+      }
+    }
+  }, []);
 
   const loadData = async () => {
+    if (!accessCode) return;
+    
     setLoading(true);
     try {
-      // Buscar o selectedPresentationId direto do AsyncStorage
-      const storedId = await AsyncStorage.getItem('selectedPresentationId');
-      if (storedId) {
-        const pres = await PresentationService.getPresentationById(storedId);
-        setPresentation(pres);
+      // Buscar detalhes da apresentação pelo código de acesso
+      const pres = await PresentationService.getPresentationByAccessCode(accessCode);
+      setPresentation(pres);
+      
+      // Salvar o ID da apresentação no AsyncStorage
+      await AsyncStorage.setItem('selectedPresentationId', pres.id.toString());
 
-        const q = await QuestionService.getQuestionsByAccessCode(pres.access_code);
-        setQuestions(q.questions || []);
-      } else {
-        setPresentation(null);
-        setQuestions([]);
-      }
+      // Buscar perguntas pelo código de acesso
+      const q = await QuestionService.getQuestionsByAccessCode(accessCode);
+      setQuestions(q.questions || []);
     } catch (error) {
       console.error('Erro ao carregar perguntas:', error);
       setPresentation(null);
@@ -42,8 +61,10 @@ export default function Questions() {
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (accessCode) {
+      loadData();
+    }
+  }, [accessCode]);
 
   const handleSendQuestion = async () => {
     if (!questionText.trim()) {
@@ -55,7 +76,7 @@ export default function Questions() {
     try {
       setSending(true);
       await QuestionService.sendQuestion({
-        access_code: presentation.access_code,
+        access_code: accessCode,
         text: questionText.trim(),
         student_name: null, // ou enviar o nome do aluno aqui
       });
@@ -63,8 +84,10 @@ export default function Questions() {
       setQuestionText('');
 
       // Atualiza lista de perguntas depois de enviar
-      const updated = await QuestionService.getQuestionsByAccessCode(presentation.access_code);
+      const updated = await QuestionService.getQuestionsByAccessCode(accessCode);
       setQuestions(updated.questions || []);
+      
+      Alert.alert('Sucesso', 'Sua pergunta foi enviada com sucesso!');
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível enviar a pergunta');
       console.error('Erro ao enviar pergunta:', error);
@@ -99,7 +122,6 @@ export default function Questions() {
           containerStyles={styles.button}
         />
 
-
         <Text style={[styles.title, { marginTop: 30 }]}>Perguntas Enviadas</Text>
 
         {questions.length === 0 && !loading && (
@@ -120,6 +142,7 @@ export default function Questions() {
 }
 
 const styles = StyleSheet.create({
+  // Estilos permanecem os mesmos
   container: {
     backgroundColor: "#161622",
     height: "100%"
@@ -131,7 +154,7 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    marginTop: 20, // essa porra
+    marginTop: 20,
     fontSize: 22,
     lineHeight: 28,
     color: 'white',

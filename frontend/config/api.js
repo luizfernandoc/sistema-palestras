@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 // Configuração da URL base da API
 export const API_URL = Platform.OS === 'web' 
   ? 'http://localhost:5000/api'  // Para desenvolvimento web
-  : 'http://192.168.136.1:5000/api'; // Substitua pelo IP do seu computador
+  : 'http://192.168.0.2:5000/api'; // Substitua pelo IP do seu computador
 
 // Função auxiliar para fazer requisições à API
 export const fetchApi = async (endpoint, options = {}) => {

@@ -1,10 +1,11 @@
+// c:\Users\luizf\Desktop\Nova_pasta_(6)\sistema-palestras\frontend\app\services\QuestionService.js
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 const API_URL = Platform.OS === 'web'
   ? 'http://localhost:5000/api'
-  : 'http://192.168.136.1:5000/api'; // Substitua pelo IP correto da sua máquina
+  : 'http://192.168.0.2:5000/api'; // Substitua pelo IP do seu computador
 
 class QuestionService {
   constructor() {
@@ -25,25 +26,27 @@ class QuestionService {
   // Obter todas as perguntas de uma palestra por código de acesso
   async getQuestionsByAccessCode(accessCode) {
     try {
-      const response = await this.api.get(`/questions/${accessCode}`);
-      return response.data.questions || []; // Ajuste conforme o retorno do backend
+      const response = await this.api.get(`/questions/access/${accessCode}`);
+      return response.data;
     } catch (error) {
+      console.error('Error fetching questions:', error);
       throw this._handleError(error);
     }
   }
 
-  // Criar uma nova pergunta
-  async createQuestion(questionData) {
+  // Enviar uma nova pergunta
+  async sendQuestion(questionData) {
     try {
-      const sanitizedData = {
-        accessCode: questionData.accessCode || '',
-        text: questionData.text || '',
-        studentName: questionData.studentName || 'Anônimo'
-      };
-
-      const response = await this.api.post('/questions', sanitizedData);
+      console.log('Enviando pergunta:', questionData);
+      const response = await this.api.post('/questions/student', {
+        access_code: questionData.access_code,
+        text: questionData.text,
+        student_name: questionData.student_name || 'Anônimo'
+      });
+      console.log('Resposta do servidor:', response.data);
       return response.data;
     } catch (error) {
+      console.error('Erro ao enviar pergunta:', error.response?.data || error.message);
       throw this._handleError(error);
     }
   }

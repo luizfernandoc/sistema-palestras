@@ -13,5 +13,7 @@ router.delete('/:id', authMiddleware, presentationController.deletePresentation)
 router.post('/:id/start', authMiddleware, presentationController.startPresentation);
 router.post('/:id/end', authMiddleware, presentationController.endPresentation);
 router.get('/:id/qrcode', presentationController.generateQRCode);
+router.get('/access/:code', presentationController.getPresentationByAccessCode);
+
 
 module.exports = router;

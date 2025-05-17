@@ -268,3 +268,74 @@ exports.getQuestionAnswers = async (req, res) => {
     });
   }
 };
+
+exports.createStudentQuestion = async (req, res) => {
+  try {
+    const { access_code, text, student_name } = req.body;
+    
+    // Verificar se a apresentação existe
+    const [presentations] = await db.execute(
+      'SELECT * FROM presentations WHERE access_code = ?',
+      [access_code]
+    );
+    
+    if (presentations.length === 0) {
+      return res.status(404).json({
+        message: 'Apresentação não encontrada'
+      });
+    }
+    
+    const presentationId = presentations[0].id;
+    
+    // Inserir a pergunta do estudante
+    const [result] = await db.execute(
+      'INSERT INTO student_questions (presentation_id, text, student_name, created_at) VALUES (?, ?, ?, NOW())',
+      [presentationId, text, student_name]
+    );
+    
+    res.status(201).json({
+      message: 'Pergunta enviada com sucesso',
+      questionId: result.insertId
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: error.message
+    });
+  }
+};
+
+exports.getQuestionsByAccessCode = async (req, res) => {
+  try {
+    const accessCode = req.params.code;
+    
+    // Verificar se a apresentação existe
+    const [presentations] = await db.execute(
+      'SELECT * FROM presentations WHERE access_code = ?',
+      [accessCode]
+    );
+    
+    if (presentations.length === 0) {
+      return res.status(404).json({
+        message: 'Apresentação não encontrada'
+      });
+    }
+    
+    const presentationId = presentations[0].id;
+    
+    // Buscar as perguntas dos estudantes
+    const [questions] = await db.execute(
+      'SELECT * FROM student_questions WHERE presentation_id = ? ORDER BY created_at DESC',
+      [presentationId]
+    );
+    
+    res.status(200).json({
+      questions
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: error.message
+    });
+  }
+};

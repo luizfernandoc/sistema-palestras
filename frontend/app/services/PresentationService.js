@@ -6,7 +6,7 @@ import { Platform } from 'react-native'; // Adicionar esta importação
 
 const API_URL = Platform.OS === 'web' 
   ? 'http://localhost:5000/api'  // Para desenvolvimento web
-  : 'http://192.168.136.1:5000/api'; // Substitua pelo IP do seu computador
+  : 'http://192.168.0.2:5000/api'; // Substitua pelo IP do seu computador
 
 class PresentationService {
   constructor() {
@@ -69,6 +69,17 @@ class PresentationService {
       const response = await this.api.get('/presentations');
       return response.data.presentations;
     } catch (error) {
+      throw this._handleError(error);
+    }
+  }
+
+  // Adicionar ao arquivo PresentationService.js
+  async getPresentationByAccessCode(accessCode) {
+    try {
+      const response = await this.api.get(`/presentations/access/${accessCode}`);
+      return response.data.presentation;
+    } catch (error) {
+      console.error('Error fetching presentation by access code:', error);
       throw this._handleError(error);
     }
   }

@@ -111,4 +111,44 @@ class Question {
   }
 }
 
+exports.createStudentQuestion = async (req, res) => {
+  try {
+    const { access_code, text, student_name } = req.body;
+    
+    console.log('Recebido pedido para criar pergunta:', { access_code, text, student_name });
+    
+    // Verificar se a apresentação existe
+    const [presentations] = await db.execute(
+      'SELECT * FROM presentations WHERE access_code = ?',
+      [access_code]
+    );
+    
+    console.log('Apresentações encontradas:', presentations);
+    
+    if (presentations.length === 0) {
+      return res.status(404).json({
+        message: 'Apresentação não encontrada'
+      });
+    }
+    
+    const presentationId = presentations[0].id;
+    
+    // Inserir a pergunta do estudante
+    const [result] = await db.execute(
+      'INSERT INTO student_questions (presentation_id, text, student_name, created_at) VALUES (?, ?, ?, NOW())',
+      [presentationId, text, student_name || 'Anônimo']
+    );
+    
+    res.status(201).json({
+      message: 'Pergunta enviada com sucesso',
+      questionId: result.insertId
+    });
+  } catch (error) {
+    console.error('Erro ao criar pergunta de estudante:', error);
+    res.status(500).json({
+      error: error.message
+    });
+  }
+};
+
 module.exports = Question;

@@ -51,47 +51,39 @@ const Student = () => {
     setShowAccessCodeCard(true);
   };
 
+
   const handleAccessCodeSubmit = async () => {
     if (!accessCode.trim()) {
       Alert.alert("Erro", "Digite o código da palestra.");
       return;
     }
-
+  
     setIsSubmitting(true);
-
+  
     try {
-      // Autenticar (opcional se quiser verificar com backend)
-      const result = await authService.loginStudent({
-        name,
-        accessCode
-      });
-
-      console.log('Login realizado com sucesso:', result);
-
-      {/*Alert.alert(
-        'Sucesso',
-        'Login realizado com sucesso!',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Redirecionar para rota dinâmica da palestra
-              router.push(`/student/${accessCode}/home`);
-            }
-          }
-        ],
-        { cancelable: false }
-      );*/}
-      router.replace(`/student/${accessCode}/home`);
-
+      console.log('Iniciando login com código:', accessCode);
+      
+      // Criar um objeto de usuário válido para armazenar
+      const userData = {
+        name: name || 'Anônimo',
+        accessCode: accessCode,
+        isAnonymous: isAnonymous,
+        loginTime: new Date().toISOString(),
+        presentationId: '1',
+        role: 'student'
+      };
+      
+      // Salvar os dados do usuário no AsyncStorage
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
+      await AsyncStorage.setItem('selectedPresentationId', '1');
+      
+      console.log('Login realizado com sucesso (modo de teste)');
+      
+      // Redirecionar para a página de perguntas do estudante
+      router.replace(`/student/${accessCode}/questions`);
     } catch (error) {
       console.error('Erro ao fazer login:', error);
-      Alert.alert(
-        'Erro',
-        error.message || 'Credenciais inválidas',
-        [{ text: 'OK' }],
-        { cancelable: false }
-      );
+      Alert.alert('Erro', 'Não foi possível fazer login. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }

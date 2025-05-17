@@ -216,6 +216,13 @@ const Home = () => {
           />
         )}
 
+        <CustomButton
+                  title='Voltar'
+                  handlePress={() => router.push('/logged')}
+                  containerStyles={[styles.button2, styles.backButton]}
+                  textStyles={styles.textBackButton}
+        />
+
         {/*
         {isRunning && (
           <Text style={styles.timerText}>
@@ -313,6 +320,20 @@ const styles = StyleSheet.create({
 
   activeStatus: {
     color: '#4CAF50',
+  },
+
+  button2: {
+    marginTop: 20
+  },
+
+  backButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#FFA001',
+  },
+
+  textBackButton: {
+    color: '#FFA001',
   },
 
   completedStatus: {

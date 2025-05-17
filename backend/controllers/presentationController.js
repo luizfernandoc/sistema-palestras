@@ -1,6 +1,8 @@
 // controllers/presentationController.js
 const Presentation = require('../models/Presentation');
 
+const db = require('../config/database');
+
 // controllers/presentationController.js
 exports.createPresentation = async (req, res) => {
   try {
@@ -255,6 +257,37 @@ exports.generateQRCode = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+    res.status(500).json({
+      error: error.message
+    });
+  }
+};
+
+// c:\Users\luizf\Desktop\Nova_pasta_(6)\sistema-palestras\backend\controllers\presentationController.js
+exports.getPresentationByAccessCode = async (req, res) => {
+  try {
+    const accessCode = req.params.code;
+    
+    console.log('Buscando apresentação com código:', accessCode);
+    
+    const [presentations] = await db.execute(
+      'SELECT * FROM presentations WHERE access_code = ?',
+      [accessCode]
+    );
+    
+    console.log('Apresentações encontradas:', presentations);
+    
+    if (presentations.length === 0) {
+      return res.status(404).json({
+        message: 'Apresentação não encontrada'
+      });
+    }
+    
+    res.status(200).json({
+      presentation: presentations[0]
+    });
+  } catch (error) {
+    console.error('Erro ao buscar apresentação por código de acesso:', error);
     res.status(500).json({
       error: error.message
     });

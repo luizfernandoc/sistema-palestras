@@ -1,3 +1,4 @@
+// c:\Users\luizf\Desktop\Nova_pasta_(6)\sistema-palestras\frontend\app\(tabs)\questions.jsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -11,18 +12,31 @@ export default function Questions() {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [presentation, setPresentation] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadPresentationAndQuestions = async () => {
     setLoading(true);
     try {
       const storedId = await AsyncStorage.getItem('selectedPresentationId');
+      console.log('ID da apresentação armazenado:', storedId);
+      
       if (storedId) {
         const pres = await PresentationService.getPresentationById(storedId);
+        console.log('Apresentação carregada:', pres);
         setPresentation(pres);
 
-        const q = await QuestionService.getQuestionsByAccessCode(pres.access_code);
-        setQuestions(q.questions || []);
+        // Buscar perguntas pelo código de acesso
+        const response = await QuestionService.getQuestionsByAccessCode(pres.access_code);
+        console.log('Perguntas recebidas:', response);
+        
+        if (response && response.questions) {
+          setQuestions(response.questions);
+        } else {
+          console.warn('Resposta não contém perguntas:', response);
+          setQuestions([]);
+        }
       } else {
+        console.warn('Nenhum ID de apresentação encontrado no AsyncStorage');
         setQuestions([]);
         setPresentation(null);
       }
@@ -32,42 +46,59 @@ export default function Questions() {
       setPresentation(null);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadPresentationAndQuestions();
   };
 
   useEffect(() => {
     loadPresentationAndQuestions();
-  }, []);
+    
+    // Configurar um intervalo para atualizar as perguntas a cada 30 segundos
+    const interval = setInterval(() => {
+      loadPresentationAndQuestions();
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, []); // Removi a dependência de presentation para evitar loops
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollview} refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={loadPresentationAndQuestions} />
+      <ScrollView 
+        style={styles.scrollview} 
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
         <Text style={styles.title}>Perguntas Recebidas</Text>
 
-        {presentation && (
-          <View style={styles.presentationContainer}>
-            <Text style={styles.presentationTitle}>{presentation.title}</Text>
-            <Text style={styles.presentationDetails}>Código: {presentation.access_code}</Text>
-          </View>
+        {loading && !refreshing && (
+          <ActivityIndicator size="large" color="#FFA001" style={{ marginTop: 20 }} />
         )}
-
-        {loading && <ActivityIndicator size="large" color="#FFA001" style={{ marginTop: 20 }} />}
 
         {questions.length === 0 && !loading && (
           <Text style={styles.emptyText}>Nenhuma pergunta recebida ainda.</Text>
         )}
 
-        {questions.map((item) => (
-          <View key={item.id} style={styles.questionContainer}>
-            <Text style={styles.questionText}>{item.text}</Text>
-            <Text style={styles.questionAuthor}>
-              Enviado por: {item.student_name || 'Anônimo'}
-            </Text>
+        {questions.length > 0 && (
+          <View style={styles.questionsContainer}>
+            {questions.map((item) => (
+              <View key={item.id} style={styles.questionContainer}>
+                <Text style={styles.questionText}>{item.text}</Text>
+                <Text style={styles.questionAuthor}>
+                  Enviado por: {item.student_name || 'Anônimo'}
+                </Text>
+                <Text style={styles.questionTime}>
+                  {new Date(item.created_at).toLocaleString()}
+                </Text>
+              </View>
+            ))}
           </View>
-        ))}
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -85,7 +116,7 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    marginTop: 20, // essa porra
+    marginTop: 20,
     fontSize: 22,
     lineHeight: 28,
     color: 'white',
@@ -113,6 +144,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#CDCDE0',
     fontFamily: 'Poppins-Regular',
+  },
+  
+  questionsContainer: {
+    marginTop: 10,
   },
 
   questionContainer: {
@@ -143,5 +178,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     marginTop: 20,
     textAlign: 'center',
+  },
+
+  questionTime: {
+    fontSize: 10,
+    color: '#CDCDE0',
+    fontFamily: 'Poppins-Regular',
+    marginTop: 4,
   },
 });
