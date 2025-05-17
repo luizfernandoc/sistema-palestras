@@ -1,10 +1,11 @@
-// routes/feedback.js
 const express = require('express');
 const router = express.Router();
+const feedbackController = require('../controllers/feedbackController');
 
-// Temporário: controlador ainda não implementado
-router.get('/', (req, res) => {
-  res.status(200).json({ message: 'Rota de feedback funcionando' });
-});
+// Rota para pegar as perguntas
+router.get('/', feedbackController.getFeedbackQuestions);
+
+// Rota para enviar respostas
+router.post('/', feedbackController.submitFeedback);
 
 module.exports = router;

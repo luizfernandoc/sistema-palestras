@@ -1,77 +1,35 @@
-// controllers/feedbackController.js
-const db = require('../config/database');
+const db = require('../config/database'); // ajuste conforme o caminho do seu config
 
-exports.createFeedback = async (req, res) => {
+// GET - retorna todas as perguntas de feedback
+const getFeedbackQuestions = async (req, res) => {
   try {
-    const { presentationId, audienceId, rating, comments } = req.body;
-    
-    // Verificar se a apresentação existe
-    const [presentations] = await db.execute(
-      'SELECT * FROM presentations WHERE id = ?',
-      [presentationId]
-    );
-    
-    if (presentations.length === 0) {
-      return res.status(404).json({
-        message: 'Apresentação não encontrada'
-      });
-    }
-    
-    const [result] = await db.execute(
-      'INSERT INTO feedback (presentation_id, audience_id, rating, comments) VALUES (?, ?, ?, ?)',
-      [presentationId, audienceId, rating, comments]
-    );
-    
-    res.status(201).json({
-      message: 'Feedback enviado com sucesso',
-      feedbackId: result.insertId
-    });
+    const [questions] = await db.query('SELECT id, question FROM feedback_questions');
+    res.status(200).json({ questions });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      error: error.message
-    });
+    console.error('Erro ao buscar perguntas de feedback:', error);
+    res.status(500).json({ error: 'Erro ao buscar perguntas de feedback.' });
   }
 };
 
-exports.getFeedbackByPresentation = async (req, res) => {
-  try {
-    const presentationId = req.params.id;
-    
-    // Verificar se a apresentação existe
-    const [presentations] = await db.execute(
-      'SELECT * FROM presentations WHERE id = ?',
-      [presentationId]
-    );
-    
-    if (presentations.length === 0) {
-      return res.status(404).json({
-        message: 'Apresentação não encontrada'
-      });
-    }
-    
-    // Obter todos os feedbacks da apresentação
-    const [feedbacks] = await db.execute(
-      'SELECT * FROM feedback WHERE presentation_id = ?',
-      [presentationId]
-    );
-    
-    // Calcular média das avaliações
-    let averageRating = 0;
-    if (feedbacks.length > 0) {
-      const totalRating = feedbacks.reduce((sum, feedback) => sum + feedback.rating, 0);
-      averageRating = totalRating / feedbacks.length;
-    }
-    
-    res.status(200).json({
-      feedbacks,
-      averageRating,
-      totalFeedbacks: feedbacks.length
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      error: error.message
-    });
+// POST - salva as respostas de um aluno para uma palestra
+const submitFeedback = async (req, res) => {
+  const { presentationId, answers } = req.body;
+
+  if (!presentationId || !Array.isArray(answers)) {
+    return res.status(400).json({ error: 'Dados inválidos. Envie presentationId e array de answers.' });
   }
+
+  try {
+    const values = answers.map((answer, index) => [presentationId, index + 1, answer]); // index + 1 = id da pergunta
+    await db.query('INSERT INTO feedback_responses (presentation_id, question_id, rating) VALUES ?', [values]);
+    res.status(201).json({ message: 'Feedback enviado com sucesso.' });
+  } catch (error) {
+    console.error('Erro ao salvar feedback:', error);
+    res.status(500).json({ error: 'Erro ao salvar feedback.' });
+  }
+};
+
+module.exports = {
+  getFeedbackQuestions,
+  submitFeedback,
 };
