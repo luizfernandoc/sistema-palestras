@@ -6,7 +6,7 @@ import { Platform } from 'react-native';
 // Definir a URL da API baseada na plataforma
 const API_URL = Platform.OS === 'web'
   ? 'http://localhost:5000/api'
-  : 'http://192.168.136.1:5000/api'; // Substitua pelo IP do seu computador na rede local
+  : 'http://192.168.0.2:5000/api'; // Substitua pelo IP do seu computador na rede local
 
 const authService = {
   async register(userData) {
@@ -36,6 +36,8 @@ const authService = {
     }
   },
 
+  //Alterado Luiz 18/05
+
   async loginStudent(credentials) {
     try {
       console.log('Tentando login com:', credentials);
@@ -45,8 +47,8 @@ const authService = {
         throw new Error('Código de acesso não fornecido');
       }
       
-      // Usar axios diretamente
-      const response = await axios.get(`${API_URL}/presentations/access/${credentials.accessCode}`, {
+      // Primeiro, verificar se o código da palestra é válido
+      const checkResponse = await axios.get(`${API_URL}/presentations/access/${credentials.accessCode}`, {
         timeout: 10000,
         headers: {
           'Content-Type': 'application/json',
@@ -54,32 +56,53 @@ const authService = {
         }
       });
       
-      console.log('Resposta da API:', response.data);
+      console.log('Resposta da verificação do código:', checkResponse.data);
       
-      if (response.data && response.data.presentation) {
+      if (checkResponse.data && checkResponse.data.presentation) {
+        // Agora, registrar o usuário como audience no banco de dados
+        // Adicionando mais logs para debug
+        console.log('Enviando requisição para registerAudience com:', {
+          name: credentials.name || 'Anônimo',
+          accessCode: credentials.accessCode
+        });
+        
+        const registerResponse = await axios.post(`${API_URL}/auth/registerAudience`, {
+          name: credentials.name || 'Anônimo',
+          accessCode: credentials.accessCode
+        });
+        
+        console.log('Resposta completa do registro de audience:', registerResponse);
+        
+        // Verificar se a resposta contém os dados esperados
+        if (!registerResponse.data || !registerResponse.data.token) {
+          console.error('Resposta inválida do servidor:', registerResponse.data);
+          throw new Error('Resposta inválida do servidor ao registrar usuário');
+        }
+        
         // Criar um objeto de usuário com dados válidos
         const userData = {
+          id: registerResponse.data.userId || `temp-${Date.now()}`,
           name: credentials.name || 'Anônimo',
           accessCode: credentials.accessCode,
-          presentationId: response.data.presentation.id,
-          role: 'student'
+          presentationId: checkResponse.data.presentation.id,
+          role: 'audience',
+          token: registerResponse.data.token
         };
         
         console.log('Dados do usuário a serem salvos:', userData);
         
-        // Salvar apenas se userData for válido
-        if (userData && Object.keys(userData).length > 0) {
-          await AsyncStorage.setItem('user', JSON.stringify(userData));
-          
-          // Salvar também o ID da apresentação para uso em outras telas
-          await AsyncStorage.setItem('selectedPresentationId', 
-            response.data.presentation.id.toString());
-        }
+        // Salvar os dados do usuário no AsyncStorage
+        await AsyncStorage.setItem('user', JSON.stringify(userData));
+        await AsyncStorage.setItem('token', registerResponse.data.token);
+        
+        // Salvar também o ID da apresentação para uso em outras telas
+        await AsyncStorage.setItem('selectedPresentationId', 
+          checkResponse.data.presentation.id.toString());
         
         return {
           success: true,
           user: userData,
-          presentation: response.data.presentation
+          presentation: checkResponse.data.presentation
         };
       } else {
         throw new Error('Código de palestra inválido');

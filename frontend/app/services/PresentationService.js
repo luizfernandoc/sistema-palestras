@@ -6,7 +6,7 @@ import { Platform } from 'react-native'; // Adicionar esta importação
 
 const API_URL = Platform.OS === 'web'
   ? 'http://localhost:5000/api'  // Para desenvolvimento web
-  : 'http://192.168.136.1:5000/api'; // Substitua pelo IP do seu computador
+  : 'http://192.168.0.2:5000/api'; // Substitua pelo IP do seu computador
 
 class PresentationService {
   constructor() {
@@ -73,34 +73,49 @@ class PresentationService {
     }
   }
 
-  // Adicionar ao arquivo PresentationService.js
-  async getPresentationByAccessCode(accessCode) {
+  // luiz 18/05
+  // Método para obter perguntas de feedback
+  async getFeedbackQuestions(presentationId) {
     try {
-      const response = await this.api.get(`/presentations/access/${accessCode}`);
-      return response.data.presentation;
+      const response = await axios.get(`${API_URL}/feedback`);
+      console.log('Perguntas de feedback obtidas:', response.data);
+      return response.data.questions;
     } catch (error) {
-      console.error('Error fetching presentation by access code:', error);
-      throw this._handleError(error);
+      console.error('Erro ao obter perguntas de feedback:', error);
+      throw error;
     }
   }
 
-  async getFeedbackQuestions(presentationId) {
-    const response = await this.api.get('/feedback/');
-    return response.data.questions; // espera um array de strings
-  }
-
+  // luiz 18/05
+  // Método para enviar respostas de feedback
   async submitFeedback(presentationId, answers) {
-    return this.api.post('/', { answers });
+    try {
+      const response = await axios.post(`${API_URL}/feedback`, {
+        presentationId,
+        answers
+      });
+      console.log('Feedback enviado com sucesso:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao enviar feedback:', error);
+      throw error;
+    }
   }
 
-  // Busca todos os feedbacks enviados para uma apresentação
+  // luiz 18/05
+  // Método para obter todos os feedbacks de uma apresentação
   async getAllFeedbacks(presentationId) {
     try {
+      console.log(`Buscando feedbacks para apresentação ID: ${presentationId}`);
       const response = await this.api.get(`/presentations/${presentationId}/feedback`);
-      // Supondo que o backend retorne algo como: { feedbacks: [ [3,4,5], [2,3,4], ... ] }
-      return response.data.feedbacks;
+      console.log('Feedbacks obtidos:', response.data);
+      return response.data.feedbacks || [];
     } catch (error) {
       console.error('Erro ao buscar todos feedbacks:', error);
+      if (error.response && error.response.status === 404) {
+        console.log('Nenhum feedback encontrado para esta apresentação');
+        return []; // Retornar array vazio em vez de lançar erro
+      }
       throw this._handleError(error);
     }
   }
@@ -164,6 +179,19 @@ class PresentationService {
       throw this._handleError(error);
     }
   }
+  // luiz 18/05
+  // Metodo para buscar palestra pelo codigo de acesso
+  async getPresentationByAccessCode(accessCode) {
+    try {
+      console.log(`Buscando apresentação com código: ${accessCode}`);
+      const response = await this.api.get(`/presentations/access/${accessCode}`);
+      console.log('Resposta da API:', response.data);
+      return response.data.presentation;
+    } catch (error) {
+      console.error('Erro ao buscar apresentação por código de acesso:', error);
+      throw this._handleError(error);
+    }
+  } 
 
   // Gerar QR Code para uma apresentação
   async generateQRCode(id) {

@@ -1,5 +1,7 @@
 // controllers/presentationController.js
 const Presentation = require('../models/Presentation');
+//add luiz 18/05
+const Feedback = require('../models/Feedback');
 
 const db = require('../config/database');
 
@@ -263,7 +265,6 @@ exports.generateQRCode = async (req, res) => {
   }
 };
 
-// c:\Users\luizf\Desktop\Nova_pasta_(6)\sistema-palestras\backend\controllers\presentationController.js
 exports.getPresentationByAccessCode = async (req, res) => {
   try {
     const accessCode = req.params.code;
@@ -293,3 +294,57 @@ exports.getPresentationByAccessCode = async (req, res) => {
     });
   }
 };
+
+// luiz 18/05
+// Método para obter todos os feedbacks de uma apresentação
+const getPresentationFeedback = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const feedbackData = await Feedback.findByPresentation(id);
+    
+    // Organizar os feedbacks por pergunta
+    const questions = await Feedback.getQuestions();
+    
+    // Estruturar os dados para o frontend
+    const feedbacks = [];
+    
+    // Agrupar feedbacks por questionId
+    const feedbacksByQuestion = {};
+    feedbackData.feedbacks.forEach(feedback => {
+      if (!feedbacksByQuestion[feedback.question_id]) {
+        feedbacksByQuestion[feedback.question_id] = [];
+      }
+      feedbacksByQuestion[feedback.question_id].push(feedback.rating);
+    });
+    
+    // Reorganizar os dados para o formato esperado pelo frontend
+    const uniqueSubmissions = new Set();
+    feedbackData.feedbacks.forEach(feedback => {
+      uniqueSubmissions.add(feedback.created_at.toISOString());
+    });
+    
+    // Converter para array de arrays (cada array interno representa um conjunto de respostas)
+    Array.from(uniqueSubmissions).forEach(submissionTime => {
+      const submission = [];
+      questions.forEach(question => {
+        const ratings = feedbacksByQuestion[question.id] || [];
+        // Pegar a primeira avaliação para esta pergunta neste conjunto de respostas
+        submission.push(ratings.length > 0 ? ratings.shift() : null);
+      });
+      feedbacks.push(submission);
+    });
+    
+    res.status(200).json({
+      feedbacks,
+      averageRating: feedbackData.averageRating,
+      totalFeedbacks: feedbackData.totalFeedbacks
+    });
+  } catch (error) {
+    console.error('Erro ao buscar feedbacks da apresentação:', error);
+    res.status(500).json({ error: 'Erro ao buscar feedbacks da apresentação.' });
+  }
+};
+
+//add luiz 18/05
+exports.getPresentationFeedback = getPresentationFeedback;

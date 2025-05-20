@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 
 const API_URL = Platform.OS === 'web'
   ? 'http://localhost:5000/api'
-  : 'http://192.168.136.1:5000/api'; // Substitua pelo IP do seu computador
+  : 'http://192.168.0.2:5000/api'; // Substitua pelo IP do seu computador
 
 class QuestionService {
   constructor() {

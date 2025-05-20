@@ -10,16 +10,20 @@ const Assess = () => {
   const [presentation, setPresentation] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [feedback, setFeedback] = useState([]);
+  const [submitted, setSubmitted] = useState(false);
 
   const loadPresentation = async () => {
     try {
       const id = await AsyncStorage.getItem('selectedPresentationId');
       if (id) {
+        console.log('Carregando apresentação com ID:', id);
         const data = await PresentationService.getPresentationById(id);
         setPresentation(data);
 
         if (data.status === 'completed') {
+          console.log('Apresentação concluída, carregando perguntas de feedback');
           const fetchedQuestions = await PresentationService.getFeedbackQuestions(id);
+          console.log('Perguntas de feedback obtidas:', fetchedQuestions);
           setQuestions(fetchedQuestions);
           setFeedback(fetchedQuestions.map(() => 3)); // valor inicial 3
         }
@@ -40,11 +44,20 @@ const Assess = () => {
   const handleSubmit = async () => {
     try {
       const id = await AsyncStorage.getItem('selectedPresentationId');
+      if (!id) {
+        Alert.alert('Erro', 'ID da apresentação não encontrado');
+        return;
+      }
+
+      console.log('Enviando feedback para apresentação ID:', id);
+      console.log('Respostas:', feedback);
+      
       await PresentationService.submitFeedback(id, feedback);
+      setSubmitted(true);
       Alert.alert('Obrigado!', 'Seu feedback foi enviado com sucesso.');
     } catch (error) {
       console.error('Erro ao enviar feedback:', error);
-      Alert.alert('Erro', 'Não foi possível enviar o feedback.');
+      Alert.alert('Erro', 'Não foi possível enviar o feedback. Tente novamente.');
     }
   };
 
@@ -57,6 +70,18 @@ const Assess = () => {
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#FFA001" />
       </View>
+    );
+  }
+
+  if (submitted) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.centered}>
+          <Text style={styles.infoText}>
+            Obrigado por enviar seu feedback!
+          </Text>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
@@ -74,12 +99,11 @@ const Assess = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollview} scrollEnabled={false}>
+      <ScrollView style={styles.scrollview}>
         <Text style={styles.title}>Avaliação da Palestra</Text>
 
         {questions.map((q, index) => (
           <View key={q.id || index} style={styles.questionContainer}>
-            {/* Usar q.question para mostrar o texto da pergunta */}
             <Text style={styles.questionText}>{q.question}</Text>
 
             <View style={styles.buttonGroup}>

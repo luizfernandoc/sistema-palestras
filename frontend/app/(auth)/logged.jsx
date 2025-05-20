@@ -15,6 +15,7 @@ const Logged = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+
   // Função para decodificar base64 (para tokens JWT)
   const atob = (input) => {
     const keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
@@ -73,22 +74,28 @@ const Logged = () => {
   };
 
   useEffect(() => {
+    // Modifiquei 18/05 - Luiz
     // Definir o nome do usuário diretamente com base nos logs
-    // Ou, se preferir uma solução mais genérica:
     const setUserNameFromStorage = async () => {
       try {
-        const userDataString = await AsyncStorage.getItem('userData');
+        // Alterando de 'userData' para 'user' para corresponder à chave usada no authService
+        const userDataString = await AsyncStorage.getItem('user');
         if (userDataString) {
+          console.log('userDataString:', userDataString);
           const userData = JSON.parse(userDataString);
-          if (userData.user && userData.user.name) {
-            setUserName(userData.user.name);
-          }
+          // Tente diferentes caminhos para o nome
+          const name =
+            userData?.name ||
+            userData?.user?.name ||
+            userData?.user?.username ||
+            '';
+          setUserName(name);
         }
       } catch (error) {
         console.error('Erro ao obter nome do usuário:', error);
       }
     };
-
+  
     // Carregar as palestras do usuário
     const loadPresentations = async () => {
       try {

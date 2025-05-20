@@ -1,4 +1,3 @@
-// c:\Users\luizf\Desktop\Nova_pasta_(6)\sistema-palestras\frontend\app\[student]\[accessCode]\questions.jsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -10,31 +9,25 @@ import FormField from '../../../components/FormField';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomButton from '../../../components/CustomButton';
 
+//add luiz 18/05
+import { useLocalSearchParams } from 'expo-router';
+
+
 export default function Questions() {
+  
   const [presentation, setPresentation] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [questionText, setQuestionText] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   
-  // Obter o código de acesso da URL
-  const [accessCode, setAccessCode] = useState('');
-  
-  useEffect(() => {
-    // Extrair o código de acesso da URL
-    if (typeof window !== 'undefined') {
-      const pathParts = window.location.pathname.split('/');
-      // Encontrar o índice após "student" na URL
-      const studentIndex = pathParts.findIndex(part => part === 'student');
-      if (studentIndex !== -1 && pathParts.length > studentIndex + 1) {
-        const code = pathParts[studentIndex + 1];
-        console.log('Código de acesso extraído da URL:', code);
-        setAccessCode(code);
-      } else {
-        console.error('Não foi possível extrair o código de acesso da URL');
-      }
-    }
-  }, []);
+  // Obter o código de acesso da URL luiz 18/05
+  const { accessCode } = useLocalSearchParams();
+  const [userQuestions, setUserQuestions] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [userName, setUserName] = useState('Anônimo');
+
+
 
   const loadData = async () => {
     if (!accessCode) return;
@@ -59,32 +52,169 @@ export default function Questions() {
       setLoading(false);
     }
   };
+  
+  // LUIZ 18/05
+  const loadUserData = async () => {
+    try {
+      const userDataString = await AsyncStorage.getItem('user');
+      if (userDataString) {
+        const userData = JSON.parse(userDataString);
+        console.log('Dados do usuário carregados:', userData);
+        setUserName(userData.name || 'Anônimo');
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados do usuário:', error);
+    }
+  };
 
   useEffect(() => {
     if (accessCode) {
       loadData();
+      loadUserData(); // Adicionando chamada para carregar dados do usuário
     }
   }, [accessCode]);
 
+  // luiz 18/05
+  // useEffect para atualizar as perguntas periodicamente
+  useEffect(() => {
+    const initializeData = async () => {
+      let code = accessCode;
+      
+      // Se o accessCode não estiver disponível via useLocalSearchParams, tente obtê-lo do AsyncStorage
+      if (!code) {
+        try {
+          const userDataString = await AsyncStorage.getItem('user');
+          if (userDataString) {
+            const userData = JSON.parse(userDataString);
+            code = userData.accessCode;
+            console.log('Código de acesso obtido do AsyncStorage:', code);
+          }
+        } catch (error) {
+          console.error('Erro ao obter código de acesso do AsyncStorage:', error);
+        }
+      }
+      
+      if (code) {
+        console.log('Inicializando dados com código de acesso:', code);
+        // Carregar dados inicialmente
+        await loadDataWithCode(code);
+        await loadUserData();
+        
+        // Configurar intervalo para atualizar perguntas a cada 10 segundos
+        const interval = setInterval(async () => {
+          console.log('Atualizando perguntas para o código:', code);
+          
+          // Apenas atualizar as perguntas, não a apresentação completa
+          try {
+            const q = await QuestionService.getQuestionsByAccessCode(code);
+            console.log('Perguntas atualizadas:', q.questions?.length || 0);
+            setQuestions(q.questions || []);
+          } catch (error) {
+            console.error('Erro ao atualizar perguntas:', error);
+          }
+        }, 10000); // 10 segundos
+        
+        return () => {
+          console.log('Limpando intervalo de atualização');
+          clearInterval(interval);
+        };
+      }
+    };
+    
+    initializeData();
+  }, [accessCode]);
+
+  // luiz 18/05
+  //  carregar dados com um código específico
+  const loadDataWithCode = async (code) => {
+    if (!code) {
+      console.error('Código de acesso não fornecido');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      console.log('Tentando carregar apresentação com código:', code);
+      
+      // Buscar detalhes da apresentação pelo código de acesso
+      const pres = await PresentationService.getPresentationByAccessCode(code);
+      console.log('Apresentação carregada:', pres);
+      
+      if (!pres) {
+        console.error('Apresentação não encontrada para o código:', code);
+        setPresentation(null);
+        setQuestions([]);
+        return;
+      }
+      
+      setPresentation(pres);
+      
+      // Salvar o ID da apresentação no AsyncStorage
+      await AsyncStorage.setItem('selectedPresentationId', pres.id.toString());
+  
+      // Buscar perguntas pelo código de acesso
+      console.log('Buscando perguntas para o código:', code);
+      const q = await QuestionService.getQuestionsByAccessCode(code);
+      console.log('Perguntas recebidas:', q);
+      
+      setQuestions(q.questions || []);
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      setPresentation(null);
+      setQuestions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // luiz 18/05
   const handleSendQuestion = async () => {
     if (!questionText.trim()) {
       Alert.alert('Atenção', 'Digite uma pergunta antes de enviar');
       console.log('Erro ao enviar a pergunta, o campo está vazio.')
       return;
     }
-
+  
     try {
       setSending(true);
+      
+      // Verificar se temos o nome do usuário, se não, tentar carregar novamente
+      if (!userName || userName === 'Anônimo') {
+        await loadUserData();
+      }
+      
+      // Obter o código de acesso do AsyncStorage se não estiver disponível via useLocalSearchParams
+      let code = accessCode;
+      if (!code) {
+        try {
+          const userDataString = await AsyncStorage.getItem('user');
+          if (userDataString) {
+            const userData = JSON.parse(userDataString);
+            code = userData.accessCode;
+          }
+        } catch (error) {
+          console.error('Erro ao obter código de acesso do AsyncStorage:', error);
+        }
+      }
+      
+      if (!code) {
+        Alert.alert('Erro', 'Código de acesso não encontrado');
+        return;
+      }
+      
+      console.log('Enviando pergunta com nome:', userName, 'e código:', code);
+      
       await QuestionService.sendQuestion({
-        access_code: accessCode,
+        access_code: code,
         text: questionText.trim(),
-        student_name: null, // ou enviar o nome do aluno aqui
+        student_name: userName
       });
-
+  
       setQuestionText('');
-
+  
       // Atualiza lista de perguntas depois de enviar
-      const updated = await QuestionService.getQuestionsByAccessCode(accessCode);
+      const updated = await QuestionService.getQuestionsByAccessCode(code);
+      console.log('Perguntas atualizadas após envio:', updated);
       setQuestions(updated.questions || []);
       
       Alert.alert('Sucesso', 'Sua pergunta foi enviada com sucesso!');
@@ -142,7 +272,6 @@ export default function Questions() {
 }
 
 const styles = StyleSheet.create({
-  // Estilos permanecem os mesmos
   container: {
     backgroundColor: "#161622",
     height: "100%"
