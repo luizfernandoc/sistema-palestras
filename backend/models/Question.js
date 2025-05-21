@@ -1,4 +1,3 @@
-// models/Question.js
 const db = require('../config/database');
 
 class Question {

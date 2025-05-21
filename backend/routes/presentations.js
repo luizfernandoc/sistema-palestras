@@ -15,5 +15,7 @@ router.post('/:id/end', authMiddleware, presentationController.endPresentation);
 router.get('/:id/qrcode', presentationController.generateQRCode);
 router.get('/access/:code', presentationController.getPresentationByAccessCode);
 
+//add luiz 18/05
+router.get('/:id/feedback', presentationController.getPresentationFeedback);
 
 module.exports = router;

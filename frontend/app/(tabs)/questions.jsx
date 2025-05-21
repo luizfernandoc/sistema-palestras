@@ -61,7 +61,7 @@ export default function Questions() {
     // Configurar um intervalo para atualizar as perguntas a cada 30 segundos
     const interval = setInterval(() => {
       loadPresentationAndQuestions();
-    }, 30000);
+    }, 10000);
     
     return () => clearInterval(interval);
   }, []); // Removi a dependência de presentation para evitar loops

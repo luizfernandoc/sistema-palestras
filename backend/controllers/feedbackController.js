@@ -1,9 +1,11 @@
-const db = require('../config/database'); // ajuste conforme o caminho do seu config
+// Alterei tudo luiz 18/05
+const Feedback = require('../models/Feedback');
+const db = require('../config/database');
 
 // GET - retorna todas as perguntas de feedback
 const getFeedbackQuestions = async (req, res) => {
   try {
-    const [questions] = await db.query('SELECT id, question FROM feedback_questions');
+    const questions = await Feedback.getQuestions();
     res.status(200).json({ questions });
   } catch (error) {
     console.error('Erro ao buscar perguntas de feedback:', error);
@@ -20,8 +22,18 @@ const submitFeedback = async (req, res) => {
   }
 
   try {
-    const values = answers.map((answer, index) => [presentationId, index + 1, answer]); // index + 1 = id da pergunta
-    await db.query('INSERT INTO feedback_responses (presentation_id, question_id, rating) VALUES ?', [values]);
+    // Inserir cada resposta individualmente usando o modelo
+    const insertPromises = answers.map(async (rating, index) => {
+      const questionId = index + 1; // Assumindo que os IDs das perguntas são sequenciais
+      await Feedback.create({
+        presentationId,
+        questionId,
+        rating
+      });
+    });
+
+    await Promise.all(insertPromises);
+    
     res.status(201).json({ message: 'Feedback enviado com sucesso.' });
   } catch (error) {
     console.error('Erro ao salvar feedback:', error);

@@ -52,37 +52,47 @@ const Student = () => {
   };
 
 
+  // Alterado Luiz 18/05
+
   const handleAccessCodeSubmit = async () => {
     if (!accessCode.trim()) {
       Alert.alert("Erro", "Digite o código da palestra.");
       return;
     }
-  
+
     setIsSubmitting(true);
-  
+
     try {
       console.log('Iniciando login com código:', accessCode);
       
-      // Criar um objeto de usuário válido para armazenar
-      const userData = {
+      // Criar um objeto de usuário para enviar ao servidor
+      const userCredentials = {
         name: name || 'Anônimo',
         accessCode: accessCode,
-        isAnonymous: isAnonymous,
-        loginTime: new Date().toISOString(),
-        presentationId: '1',
-        role: 'student'
+        isAnonymous: isAnonymous
       };
       
-      // Salvar os dados do usuário no AsyncStorage
-      await AsyncStorage.setItem('user', JSON.stringify(userData));
-      await AsyncStorage.setItem('selectedPresentationId', '1');
+      // Chamar o método de login do authService que agora vai registrar o usuário no banco
+      const result = await authService.loginStudent(userCredentials);
       
-      console.log('Login realizado com sucesso (modo de teste)');
-      
-      router.replace(`/student/${accessCode}/home`);
+      if (result.success) {
+        console.log('Login realizado com sucesso, dados do usuário:', result.user);
+        
+        // Verificar se os dados foram salvos corretamente
+        const savedUser = await AsyncStorage.getItem('user');
+        console.log('Usuário salvo no AsyncStorage:', savedUser);
+        
+        // Verificar se o token foi salvo
+        const savedToken = await AsyncStorage.getItem('token');
+        console.log('Token salvo:', savedToken ? 'Sim' : 'Não');
+        
+        router.replace(`/student/${accessCode}/home`);
+      } else {
+        Alert.alert('Erro', 'Código de palestra inválido.');
+      }
     } catch (error) {
       console.error('Erro ao fazer login:', error);
-      Alert.alert('Erro', 'Não foi possível fazer login. Tente novamente.');
+      Alert.alert('Erro', error.message || 'Não foi possível fazer login. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }

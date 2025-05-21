@@ -1,27 +1,28 @@
-// models/Feedback.js
+// c:\Users\luizf\Desktop\Nova_pasta_(7)\sistema-palestras\backend\models\Feedback.js
+
 const db = require('../config/database');
 
 class Feedback {
   static async create(feedbackData) {
-    const { presentationId, audienceId, rating, comments } = feedbackData;
+    const { presentationId, questionId, rating } = feedbackData;
     
     const [result] = await db.execute(
-      'INSERT INTO feedback (presentation_id, audience_id, rating, comments) VALUES (?, ?, ?, ?)',
-      [presentationId, audienceId, rating, comments]
+      'INSERT INTO feedback_answers (presentation_id, question_id, rating, created_at) VALUES (?, ?, ?, NOW())',
+      [presentationId, questionId, rating]
     );
     
     return {
       id: result.insertId,
       presentation_id: presentationId,
-      audience_id: audienceId,
+      question_id: questionId,
       rating,
-      comments
+      created_at: new Date()
     };
   }
 
   static async findByPresentation(presentationId) {
     const [feedbacks] = await db.execute(
-      'SELECT * FROM feedback WHERE presentation_id = ?',
+      'SELECT * FROM feedback_answers WHERE presentation_id = ?',
       [presentationId]
     );
     
@@ -37,6 +38,11 @@ class Feedback {
       averageRating,
       totalFeedbacks: feedbacks.length
     };
+  }
+
+  static async getQuestions() {
+    const [questions] = await db.execute('SELECT id, question FROM feedback_questions');
+    return questions;
   }
 }
 
