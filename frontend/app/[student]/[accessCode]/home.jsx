@@ -69,8 +69,8 @@ const StudentHome = () => {
       <ScrollView style={styles.scrollview}>
         <Image
           source={images.inova}
-          resizeMode='contain'
           style={styles.inova}
+          resizeMode='contain'
         />
 
         <Text style={styles.textstyle1}>Informações da Palestra</Text>
@@ -131,8 +131,10 @@ const styles = StyleSheet.create({
   },
 
   inova: {
-    width: 145,
-    height: 44
+    width: 380, // Tamanho da logo
+    height: 300,
+    marginBottom: -90,
+    marginTop: -70
   },
 
   scrollview: {
@@ -149,7 +151,7 @@ const styles = StyleSheet.create({
   },
   
   button2: {
-    marginTop: 20
+    marginTop: 24
   },
 
   backButton: {

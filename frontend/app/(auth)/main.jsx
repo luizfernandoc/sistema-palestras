@@ -13,8 +13,8 @@ const Main = () => {
         <View style={styles.viewstyle1}>
           <Image
             source={images.inova}
-            resizeMode='contain'
             style={styles.inova}
+            resizeMode='contain'
           />
 
           <View style={styles.viewstyle2}>
@@ -78,9 +78,10 @@ const styles = StyleSheet.create({
   },
 
   inova: {
-    marginTop: 28,
-    width: 180,
-    height: 84
+    width: 380, // Tamanho da logo
+    height: 300,
+    marginBottom: -90,
+    marginTop: -40
   },
 
   choice: {

@@ -25,8 +25,8 @@ const ForgotPassword = () => {
                 <View style={styles.viewstyle1}>
                     <Image
                         source={images.inova}
-                        resizeMode='contain'
                         style={styles.inova}
+                        resizeMode='contain'
                     />
 
                     <Text style={styles.textstyle1}>
@@ -71,9 +71,11 @@ const styles = StyleSheet.create({
         backgroundColor: "#161622",
         height: "100%"
     },
+
     textstyle: {
         color: 'white'
     },
+
     viewstyle1: {
         width: "100%",
         justifyContent: "center",
@@ -81,9 +83,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         marginVertical: 24
     },
+
     formfield: {
         marginTop: 8
     },
+
     textstyle1: {
         color: "white",
         fontFamily: "Poppins-SemiBold",
@@ -92,6 +96,7 @@ const styles = StyleSheet.create({
         marginTop: 40,
         fontWeight: 600
     },
+
     textstyle2: {
         color: "white",
         width: '80%',
@@ -100,16 +105,20 @@ const styles = StyleSheet.create({
         lineHeight: 28,
         marginTop: 10,
     },
+
     inova: {
-        marginTop: 28,
-        width: 145,
-        height: 44
+        width: 380, // Tamanho da logo
+        height: 300,
+        marginBottom: -110,
+        marginTop: -80
     },
+
     forgotpassword: {
         width: 350,
         height: 330,
         marginTop: 28
     },
+
     buttonstyle: {
         marginTop: 32
     }

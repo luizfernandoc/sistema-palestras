@@ -103,8 +103,8 @@ const Student = () => {
       <View style={styles.viewstyle1}>
         <Image
           source={images.inova}
-          resizeMode='contain'
           style={styles.inova}
+          resizeMode='contain'
         />
       </View>
 
@@ -218,9 +218,10 @@ const styles = StyleSheet.create({
   },
 
   inova: {
-    marginBottom: 40,
-    width: 145,
-    height: 44
+    width: 380, // Tamanho da logo
+    height: 300,
+    marginBottom: -70,
+    marginTop: -100
   },
 
   button: {

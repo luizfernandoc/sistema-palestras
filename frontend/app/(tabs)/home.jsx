@@ -140,8 +140,8 @@ const Home = () => {
       <ScrollView style={styles.scrollview}>
         <Image
           source={images.inova}
-          resizeMode='contain'
           style={styles.inova}
+          resizeMode='contain'
         />
 
         <Text style={styles.textstyle1}>
@@ -249,8 +249,10 @@ const styles = StyleSheet.create({
   },
 
   inova: {
-    width: 145,
-    height: 44
+    width: 380, // Tamanho da logo
+    height: 300,
+    marginBottom: -100,
+    marginTop: -70
   },
 
   scrollview: {
@@ -278,7 +280,7 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    marginTop: 280 // alterar
+    marginTop: 24 // alterar
   },
 
   errorText: {

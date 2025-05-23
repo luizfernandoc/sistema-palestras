@@ -34,8 +34,8 @@ export default function App() {
           <View style={styles.viewstyle2}>
             <Text style={styles.textstyle}>
               Crie, Melhore, Pergunte!{"\n"}
-              Tudo Isso e Mais com {''}
-              <Text style={styles.textstyle2}>Inova</Text>
+              Tudo Isso com{''}
+              <Text style={styles.textstyle2}> Palestrix</Text>
             </Text>
 
             <Image
@@ -85,8 +85,9 @@ const styles = StyleSheet.create({
   },
 
   imagestyle1: {
-    width: 180, // Tamanho da logo
-    height: 84
+    width: 380, // Tamanho da logo
+    height: 300,
+    marginBottom: -90
   },
 
   cardstyle: {
@@ -113,11 +114,11 @@ const styles = StyleSheet.create({
   },
 
   imagestyle2: {
-    width: 136,
-    height: 15,
+    width: 148,
+    height: 18,
     position: 'absolute',
-    bottom: -9,
-    right: -36
+    bottom: -14,
+    right: -26
   },
 
   textstyle3: {
