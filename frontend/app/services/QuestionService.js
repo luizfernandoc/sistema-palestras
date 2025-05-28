@@ -22,7 +22,15 @@ class QuestionService {
       return config;
     });
   }
-
+  async likeQuestion(questionId) {
+    try {
+      const response = await this.api.post(`/questions/student/${questionId}/like`);
+      return response.data;
+    } catch (error) {
+      console.error('Error liking question:', error);
+      throw this._handleError(error);
+    }
+  }
   // Obter todas as perguntas de uma palestra por código de acesso
   async getQuestionsByAccessCode(accessCode) {
     try {

@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import PresentationService from '../services/PresentationService';
 import QuestionService from '../services/QuestionService';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FontAwesome } from '@expo/vector-icons';
 
 export default function Questions() {
   const [questions, setQuestions] = useState([]);
@@ -88,7 +89,13 @@ export default function Questions() {
           <View style={styles.questionsContainer}>
             {questions.map((item) => (
               <View key={item.id} style={styles.questionContainer}>
-                <Text style={styles.questionText}>{item.text}</Text>
+                <View style={styles.questionHeader}>
+                  <Text style={styles.questionText}>{item.text}</Text>
+                  <View style={styles.likeDisplay}>
+                    <FontAwesome name="thumbs-up" size={16} color="#FFA001" />
+                    <Text style={styles.likeCount}>{item.likes || 0}</Text>
+                  </View>
+                </View>
                 <Text style={styles.questionAuthor}>
                   Enviado por: {item.student_name || 'Anônimo'}
                 </Text>
@@ -103,6 +110,7 @@ export default function Questions() {
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -185,5 +193,26 @@ const styles = StyleSheet.create({
     color: '#CDCDE0',
     fontFamily: 'Poppins-Regular',
     marginTop: 4,
+  },
+  questionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  
+  likeDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2A2A3A',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  
+  likeCount: {
+    color: '#FFA001',
+    marginLeft: 4,
+    fontSize: 14,
+    fontFamily: 'Poppins-Medium',
   },
 });
